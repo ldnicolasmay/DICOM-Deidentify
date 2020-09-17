@@ -1,0 +1,16 @@
+.DS_Store
+.idea/
+archive/
+out/
+target/scala-2.13/classes/
+target/scala-2.13/test-classes/
+target/scala-2.13/update/
+target/streams/
+target/test-reports/
+log/
+
+pixelmedjavadicom*/
+lib/docs/
+
+.history
+*.log
