@@ -12,5 +12,5 @@ SCALA="lib/scala-library-2.13.3.jar"         && \
 ```shell script
 java -cp \
   $SCALA:$PIXELMED:$LB_CORE:$LB_CLASSIC:$SLF4J:$PICOCLI:$CONFIG:$APP \
-  edu.umich.med.alzheimers.dicom_deidentify.Main$delayedInit$body
+  edu.umich.med.alzheimers.dicom.Main$delayedInit$body
 ```

@@ -12,8 +12,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" % "config" % "1.3.0",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2",
   "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
-  "ch.qos.logback" % "logback-core" % "1.2.3" % Runtime,
-  "org.scalameta" %% "scalameta" % "4.3.22"
+  "ch.qos.logback" % "logback-core" % "1.2.3" % Runtime
 )
 
 Compile / unmanagedJars ++= {
