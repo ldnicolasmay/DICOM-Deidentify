@@ -6,10 +6,9 @@ import java.nio.file.{CopyOption, Path, Paths}
 import java.util.concurrent.Callable
 
 import edu.umich.med.alzheimers.dicom.copy.{Copier, CopyConfig}
-import edu.umich.med.alzheimers.dicom.deidentify.Deidentifier
-import edu.umich.med.alzheimers.dicom.zip.Zipper
+import edu.umich.med.alzheimers.dicom.deidentify.{Deidentifier, DeidentifyConfig}
+import edu.umich.med.alzheimers.dicom.zip.{Zipper, ZipConfig}
 import edu.umich.med.alzheimers.dicom.filesystem.DirNode
-import edu.umich.med.alzheimers.dicom.zip.ZipConfig
 import org.slf4j.{Logger, LoggerFactory}
 import picocli.CommandLine
 import picocli.CommandLine.{Command, Option}
@@ -53,14 +52,13 @@ class CopyDeidentifyZip extends Callable[Int] {
   @throws(classOf[Exception])
   override def call(): Int = {
 
-    // Capture source and target directory paths from config
-    val sourceDirPath: Path = Paths.get(CopyConfig.sourceDirPathStr)
-    val targetDirPath: Path = Paths.get(CopyConfig.targetDirPathStr)
-    logger.info(s"sourceDirPath=${sourceDirPath.getFileName.toString}")
-    logger.info(s"targetDirPath=${targetDirPath.getFileName.toString}")
+    // Capture Copy configs
+    val copySourceDirPath: Path = Paths.get(CopyConfig.sourceDirPathStr)
+    val copyTargetDirPath: Path = Paths.get(CopyConfig.targetDirPathStr)
+    logger.info(s"sourceDirPath=${copySourceDirPath.getFileName.toString}")
+    logger.info(s"targetDirPath=${copyTargetDirPath.getFileName.toString}")
 
-    // Capture regexes from config
-    val intermedDirsRegex: String = sourceDirPath.getFileName.toString + "|" +
+    val intermedDirsRegex: String = copySourceDirPath.getFileName.toString + "|" +
       CopyConfig.intermedDirsRegexArray.mkString(sep = "|")
     val dicomFileRegex: String = CopyConfig.dicomFilenameRegexArray.mkString("|")
     val seriesDescriptionRegex: String = CopyConfig.seriesDescriptionRegexArray.mkString("|")
@@ -68,13 +66,18 @@ class CopyDeidentifyZip extends Callable[Int] {
     logger.info(s"dicomFileRegex=${dicomFileRegex}")
     logger.info(s"seriesDescriptionRegex=${seriesDescriptionRegex}")
 
-    // Capture zip depth from config
-    val zipDepth: Int = ZipConfig.dicomZipConfigZipDepth
+    // Capture Deidentify configs
+    val deidentifySourceDirPath: Path = copySourceDirPath
+
+    // Capture Zip configs
+    val zipSourceDirPath: Path = Paths.get(ZipConfig.sourceDirPathStr)
+    val zipTargetDirPath: Path = Paths.get(ZipConfig.targetDirPathStr)
+    val zipDepth: Int = ZipConfig.zipDepth
 
     // Create source and target DirNode trees
-    val sourceDirNode = DirNode(sourceDirPath, 0, intermedDirsRegex, dicomFileRegex)
+    val sourceDirNode = DirNode(copySourceDirPath, 0, intermedDirsRegex, dicomFileRegex)
     logger.info(s"sourceDirNode=${sourceDirNode.dirPath.toString}, ${sourceDirNode.countSubNodes()} nodes")
-    val targetDirNode = DirNode(targetDirPath, 0, intermedDirsRegex, dicomFileRegex)
+    val targetDirNode = DirNode(copyTargetDirPath, 0, intermedDirsRegex, dicomFileRegex)
     logger.info(s"targetDirNode=${targetDirNode.dirPath.toString}, ${targetDirNode.countSubNodes()} nodes")
 
     // Filter source DirNode tree using regexes and focused filters
@@ -102,8 +105,8 @@ class CopyDeidentifyZip extends Callable[Int] {
     // Copy directories and files
     // TODO: Create config and/or command-line options for controlling file overwriting and attribute-copying
     val copyOptions: Seq[CopyOption] = Seq(REPLACE_EXISTING, COPY_ATTRIBUTES, NOFOLLOW_LINKS)
-    val fileCopier = new Copier(sourceDirPath, targetDirPath, copyOptions)
-    sourceDirNodeFilteredMinusTargetNodeWithSourceRoot.copyNode(fileCopier)
+    val copier = new Copier(copySourceDirPath, copyTargetDirPath, copyOptions)
+    sourceDirNodeFilteredMinusTargetNodeWithSourceRoot.copyNode(copier)
     logger.info("sourceDirNodeFilteredMinusTargetNodeWithSourceRoot copied to disk")
 
     val sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot: DirNode =
@@ -114,23 +117,26 @@ class CopyDeidentifyZip extends Callable[Int] {
         )
 
     // Deidentify files
-    val fileDeidentifier = new Deidentifier(sourceDirPath, targetDirPath, copyOptions)
-    sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot.deidentifyNode(fileDeidentifier)
+    // val fileDeidentifier = new Deidentifier(deidentifySourceDirPath, copyOptions)
+    val deidentifier = new Deidentifier(deidentifySourceDirPath)
+    sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot.deidentifyNode(deidentifier)
     logger.info("sourceDirNodeFilteredMinusTargetNodeWithSourceRoot deidentified")
 
     // Zip directories
-    val dirNodeToZipDepth = sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot.depth
-    val fileZipper = new Zipper(sourceDirPath, targetDirPath, dirNodeToZipDepth, zipDepth)
-    sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot.zipNode(fileZipper)
+    val dirNodeDepth = sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot.depth
+    val zipper = new Zipper(zipSourceDirPath, zipTargetDirPath, dirNodeDepth, zipDepth)
+    sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot.zipNode(zipper)
     logger.info("sourceDirNodeFilteredMinusTargetNodeWithSourceRoot zipped")
 
     0
   }
 }
 
-// Main class companion object
-object CopyDeidentifyZip extends App {
-  private val logger: Logger = LoggerFactory.getLogger(classOf[CopyDeidentifyZip])
-  val exitCode: Int = new CommandLine(new CopyDeidentifyZip()).execute(args: _*)
-  System.exit(exitCode)
+object CopyDeidentifyZip {
+  val logger: Logger = LoggerFactory.getLogger(classOf[CopyDeidentifyZip])
+
+  def main(args: Array[String]): Unit = {
+    val exitCode: Int = new CommandLine(new CopyDeidentifyZip()).execute(args: _*)
+    System.exit(exitCode)
+  }
 }

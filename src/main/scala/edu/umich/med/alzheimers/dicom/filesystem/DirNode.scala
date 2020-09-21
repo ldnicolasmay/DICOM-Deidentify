@@ -325,30 +325,28 @@ object DirNode {
 
     val attr: BasicFileAttributes = Files.readAttributes(dirPath, classOf[BasicFileAttributes])
 
-    val children: Try[(List[DirNode], List[FileNode])] =
-      Using.Manager {
-        use =>
-          // Use one Java Directory Stream
-          val directoryDicomFileFilter = new DirectoryDicomFileFilter()
-          val dirStream: DirectoryStream[Path] = use(Files.newDirectoryStream(dirPath, directoryDicomFileFilter))
+    val children: Try[(List[DirNode], List[FileNode])] = Using.Manager { use =>
+      // Use one Java Directory Stream
+      val directoryDicomFileFilter = new DirectoryDicomFileFilter()
+      val dirStream: DirectoryStream[Path] = use(Files.newDirectoryStream(dirPath, directoryDicomFileFilter))
 
-          // Partition DirectoryStream into tuple of Path Iterators
-          val partitionedDirStream: (Iterator[Path], Iterator[Path]) = dirStream
-            .iterator()
-            .asScala
-            .partition(Files.isDirectory(_))
+      // Partition DirectoryStream into tuple of Path Iterators
+      val partitionedDirStream: (Iterator[Path], Iterator[Path]) = dirStream
+        .iterator()
+        .asScala
+        .partition(Files.isDirectory(_))
 
-          // Get the child directory Path Iterator from the tuple; Map each directory Path into a DirNode
-          val childDirNodesIt: Iterator[DirNode] = partitionedDirStream._1
-            .map(DirNode(_, depth + 1, intermedDirsRegex, dicomFileRegex))
+      // Get the child directory Path Iterator from the tuple; Map each directory Path into a DirNode
+      val childDirNodesIt: Iterator[DirNode] = partitionedDirStream._1
+        .map(DirNode(_, depth + 1, intermedDirsRegex, dicomFileRegex))
 
-          // Get the child file Path iterator from the tuple; Map each file Path into a FileNode
-          val childFileNodesIt: Iterator[FileNode] = partitionedDirStream._2
-            .map(FileNode(_, depth + 1))
+      // Get the child file Path iterator from the tuple; Map each file Path into a FileNode
+      val childFileNodesIt: Iterator[FileNode] = partitionedDirStream._2
+        .map(FileNode(_, depth + 1))
 
-          // Convert children iterators to List at last possible moment
-          (childDirNodesIt.toList, childFileNodesIt.toList)
-      }
+      // Convert children iterators to List at last possible moment
+      (childDirNodesIt.toList, childFileNodesIt.toList)
+    }
 
     val derivedChildDirNodes: List[DirNode] = children match {
       case Success(c) => c._1

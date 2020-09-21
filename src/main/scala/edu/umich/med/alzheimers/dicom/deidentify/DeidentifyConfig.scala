@@ -13,6 +13,7 @@ object DeidentifyConfig {
 
   private val config: Config = ConfigFactory.parseFile(new File("src/main/resources/config/deidentify.conf"))
 
+  val sourceDirPathStr: String = config.getString("config.sourceDirPathStr")
   val dicomAttributesToReplaceWithZero: List[String] =
     config.getStringList("config.dicomAttributesToReplaceWithZero").asScala.toList
 }

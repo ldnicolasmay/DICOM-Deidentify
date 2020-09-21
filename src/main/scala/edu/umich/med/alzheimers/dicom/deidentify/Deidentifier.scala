@@ -3,10 +3,7 @@ package edu.umich.med.alzheimers.dicom.deidentify
 import java.io.{BufferedOutputStream, FileOutputStream, IOException}
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.FileVisitResult._
-import java.nio.file.LinkOption.NOFOLLOW_LINKS
-import java.nio.file.StandardCopyOption.COPY_ATTRIBUTES
-import java.nio.file.CopyOption
-import java.nio.file.{FileVisitResult, FileVisitor, Files, Path}
+import java.nio.file.{FileVisitResult, FileVisitor, Path}
 
 import com.pixelmed.dicom.{Attribute, AttributeList, AttributeTag, DicomDictionary, DicomException, TagFromName}
 import org.slf4j.{Logger, LoggerFactory}
@@ -15,14 +12,8 @@ import org.slf4j.{Logger, LoggerFactory}
  * DICOM file deidentifier implementing Java `FileVisitor`
  *
  * @param sourceDirPath `Path` of source directory
- * @param targetDirPath `Path` of target directory
- * @param copyOptions   `Seq` of possible `REPLACE_EXISTING`, `COPY_ATTRIBUTES`, `NOFOLLOW_LINK`
  */
-class Deidentifier(
-                    val sourceDirPath: Path,
-                    val targetDirPath: Path,
-                    val copyOptions: Seq[CopyOption])
-  extends FileVisitor[Path] {
+class Deidentifier(val sourceDirPath: Path) extends FileVisitor[Path] {
 
   /** Logger */
   private def logger: Logger = Deidentifier.logger
@@ -61,10 +52,7 @@ class Deidentifier(
    * @return `FileVisitResult` to `CONTINUE`
    */
   override def visitFile(file: Path, attr: BasicFileAttributes): FileVisitResult = {
-    val target = targetDirPath.resolve(sourceDirPath.relativize(file))
-
-    Deidentifier.deidentifyDicomFile(file, attr, target, copyOptions)
-    logger.info(s"Deidentify ${target.toString}")
+    Deidentifier.deidentifyDicomFile(file, attr)
 
     CONTINUE
   }
@@ -96,26 +84,22 @@ object Deidentifier {
    *
    * @param sourceDicomFile `Path` of source DICOM file
    * @param attr            `BasicFileAttributes` of source DICOM file
-   * @param targetDicomFile `Path` of target DICOM file
-   * @param copyOptions     `Seq` of possible `REPLACE_EXISTING`, `COPY_ATTRIBUTES`, `NOFOLLOW_LINK`
    */
   def deidentifyDicomFile(
                            sourceDicomFile: Path,
-                           attr: BasicFileAttributes,
-                           targetDicomFile: Path,
-                           copyOptions: Seq[CopyOption]): Unit = {
+                           attr: BasicFileAttributes): Unit = {
     // 1 Get DICOM targetFile AttributeList
-    val attrList = Deidentifier.getAttributeListFromPath(targetDicomFile)
+    val attrList = Deidentifier.getAttributeListFromPath(sourceDicomFile)
 
     // 2 Reformat PatientID string: hlp17umm01234 => UM00001234
-    Deidentifier.reformatPatientId(targetDicomFile, attrList)
+    Deidentifier.reformatPatientId(sourceDicomFile, attrList)
 
     // 3 Replace/remove private DICOM elements/attributes
-    Deidentifier.replacePrivateDicomElements(targetDicomFile, attrList)
-    Deidentifier.removePrivateElements(targetDicomFile, attrList)
+    Deidentifier.replacePrivateDicomElements(sourceDicomFile, attrList)
+    Deidentifier.removePrivateElements(sourceDicomFile, attrList)
 
     // 4 Write deidentified AttributeList object to file
-    Deidentifier.writeAttributeListToFile(sourceDicomFile, attrList, targetDicomFile, copyOptions)
+    Deidentifier.writeAttributeListToFile(sourceDicomFile, attrList)
   }
 
   /**
@@ -205,38 +189,29 @@ object Deidentifier {
   /**
    * Write `AttributeList` object to `Path` object
    *
-   * @param sourceDicomFile `Path` of source DICOM file
-   * @param targetDicomFile `Path` of target DICOM file
-   * @param copyOptions     `Seq` of possible `REPLACE_EXISTING`, `COPY_ATTRIBUTES`, `NOFOLLOW_LINK`
-   * @param attrList        `AttributeList` object from source DICOM file
+   * @param dicomFile `Path` of DICOM file
+   * @param attrList  `AttributeList` object from source DICOM file
    */
   private def writeAttributeListToFile(
-                                        sourceDicomFile: Path,
-                                        attrList: AttributeList,
-                                        targetDicomFile: Path,
-                                        copyOptions: Seq[CopyOption]): Unit = {
+                                        dicomFile: Path,
+                                        attrList: AttributeList): Unit = {
     // 1 Write attrList to DicomOutputStream
     val transferSyntaxUID: String = attrList
       .get(TagFromName.TransferSyntaxUID)
       .getDelimitedStringValuesOrEmptyString // https://www.dicomlibrary.com/dicom/transfer-syntax/
-    val bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(targetDicomFile.toString))
+    val bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(dicomFile.toString))
 
     // 2 Write edited AttributeList object (attrList) to BufferedFileOutputStream object (bufferedOutputStream)
     try {
       // https://www.dclunie.com/pixelmed/software/javadoc/com/pixelmed/dicom/ +
       //   AttributeList.html#write-java.io.OutputStream-java.lang.String-boolean-boolean-boolean-
-      // write(BufferedFileOutputStream, TransferSyntaxUID, useMeta, useBufferedStream, closeAfterWrite)
       attrList.write(bufferedOutputStream, transferSyntaxUID, true, true, true)
-      if (copyOptions.contains(COPY_ATTRIBUTES)) {
-        Files.setLastModifiedTime(targetDicomFile, Files.getLastModifiedTime(sourceDicomFile, NOFOLLOW_LINKS))
-        Files.setPosixFilePermissions(targetDicomFile, Files.getPosixFilePermissions(sourceDicomFile, NOFOLLOW_LINKS))
-      }
     }
     catch {
       case e: DicomException =>
-        logger.error(s"writeAttributeListToFile(${targetDicomFile.toString}) DicomExc: $e")
+        logger.error(s"writeAttributeListToFile(${dicomFile.toString}) DicomExc: $e")
       case e: IOException =>
-        logger.error(s"writeAttributeListToFile(${targetDicomFile.toString}) IOExc: $e")
+        logger.error(s"writeAttributeListToFile(${dicomFile.toString}) IOExc: $e")
     }
     finally {
       if (bufferedOutputStream != null)

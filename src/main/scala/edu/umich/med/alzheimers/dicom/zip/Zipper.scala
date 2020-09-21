@@ -3,7 +3,7 @@ package edu.umich.med.alzheimers.dicom.zip
 import java.io.IOException
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.FileVisitResult.{CONTINUE, SKIP_SIBLINGS, SKIP_SUBTREE}
-import java.nio.file.{FileVisitResult, FileVisitor, Path, Paths}
+import java.nio.file.{FileVisitResult, FileVisitor, Files, Path, Paths}
 
 import org.slf4j.{Logger, LoggerFactory}
 import org.zeroturnaround.zip.{NameMapper, ZipUtil}
@@ -17,10 +17,10 @@ import org.zeroturnaround.zip.{NameMapper, ZipUtil}
  * @param zipDepth      `Int` depth at which to zip files or directories
  */
 class Zipper(
-                  val sourceDirPath: Path,
-                  val targetDirPath: Path,
-                  val nodeDepth: Int,
-                  val zipDepth: Int)
+              val sourceDirPath: Path,
+              val targetDirPath: Path,
+              val nodeDepth: Int,
+              val zipDepth: Int)
   extends FileVisitor[Path] {
 
   /** Logger */
@@ -37,10 +37,12 @@ class Zipper(
     val target: Path = targetDirPath.resolve(sourceDirPath.relativize(dir))
 
     if (nodeDepth < zipDepth) {
+      logger.info(s"Create directory ${target.toString} with nodeDepth=${nodeDepth}")
+      Files.createDirectory(target)
       CONTINUE
     } else if (nodeDepth == zipDepth) {
+      logger.info(s"Zip ${dir.toString} to ${target.toString} with nodeDepth=${nodeDepth}, zipDepth=${zipDepth}")
       Zipper.zipDirectory(dir, attr, target)
-      logger.info(s"Zipping ${dir.toString} with nodeDepth=${nodeDepth}, zipDepth=${zipDepth}")
       SKIP_SUBTREE
     } else {
       SKIP_SIBLINGS
@@ -73,10 +75,11 @@ class Zipper(
     val target = targetDirPath.resolve(sourceDirPath.relativize(file))
 
     if (nodeDepth < zipDepth) {
+      Files.createDirectory(target)
       CONTINUE
     } else if (nodeDepth == zipDepth) {
+      logger.info(s"Zip ${file.toString} to ${target.toString} with depth ${nodeDepth} @ depth ${zipDepth}")
       Zipper.zipFile(file, attr, target)
-      logger.info(s"Zipping ${file.toString} with depth ${nodeDepth} @ depth ${zipDepth}")
       SKIP_SUBTREE
     } else {
       SKIP_SIBLINGS
@@ -117,16 +120,17 @@ object Zipper {
                     sourceDir: Path,
                     attr: BasicFileAttributes,
                     targetDir: Path): Unit = {
-      // TODO: Implement zipping from a source directory into a target directory
-      val zipPath: Path = Paths.get(sourceDir.toString + ".zip")
-      ZipUtil.pack(
-        sourceDir.toFile,
-        zipPath.toFile,
-        new NameMapper() {
-          override def map(name: String): String = sourceDir.getFileName.toString + "/" + name
-        }
-      )
+    val targetZipPath: Path = Paths.get(targetDir.toString + ".zip")
+
+    ZipUtil.pack(
+      sourceDir.toFile,
+      targetZipPath.toFile,
+      new NameMapper() {
+        override def map(name: String): String = targetZipPath.getFileName.toString + "/" + name
+      }
+    )
   }
+
   /**
    * Zip file
    *
@@ -136,18 +140,18 @@ object Zipper {
    */
 
   def zipFile(
-                    sourceFile: Path,
-                    attr: BasicFileAttributes,
-                    targetFile: Path): Unit = {
-      // TODO: Implement zipping from source directory into a target directory
-      val zipPath: Path = Paths.get(sourceFile.toString + ".zip")
-      ZipUtil.packEntry(
-        sourceFile.toFile,
-        zipPath.toFile,
-        new NameMapper() {
-          override def map(name: String): String = sourceFile.getFileName.toString + "/" + name
-        }
-      )
+               sourceFile: Path,
+               attr: BasicFileAttributes,
+               targetFile: Path): Unit = {
+    val targetZipPath: Path = Paths.get(targetFile.toString + ".zip")
+
+    ZipUtil.packEntry(
+      sourceFile.toFile,
+      targetZipPath.toFile,
+      new NameMapper() {
+        override def map(name: String): String = sourceFile.getFileName.toString + "/" + name
+      }
+    )
   }
 
 }

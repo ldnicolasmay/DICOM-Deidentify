@@ -8,5 +8,7 @@ object ZipConfig {
 
   private val config: Config = ConfigFactory.parseFile(new File("src/main/resources/config/zip.conf"))
 
-  val dicomZipConfigZipDepth = config.getInt("config.zipDepth")
+  val sourceDirPathStr: String = config.getString("config.sourceDirPathStr")
+  val targetDirPathStr: String = config.getString("config.targetDirPathStr")
+  val zipDepth: Int = config.getInt("config.zipDepth")
 }
