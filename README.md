@@ -3,7 +3,9 @@
 
 ## About
 
-This app helps process DICOM files for deidentification. To minimize file I/O, source directories and files are only copied if they do not already exist in the target directory tree.
+This app helps process DICOM files for deidentification. A source directory tree containing DICOM files is filtered for specific directories (by name and number of files within) and DICOM files (by name and `SeriesDescription` attribute value). That source directory tree is then copied to a target directory, the target tree DICOM files are deidentified, and finally the target tree is zipped at a specific tree depth. To minimize file I/O, source directories and files are only copied if they do not already exist in the target directory tree. 
+
+There is one class for performing all three steps (copy, deidentify, zip): `edu.umich.med.alzheimers.dicom.CopyDeidentifyZip`. There are also classes in subpackages of `edu.umich.med.alzheimers.dicom` for performing each of the three steps in isolation: `...dicom.copy.Copy`, `...dicom.deidentify.Deidentify`, `...dicom.zip.Zip`. 
 
 A firm grasp of regular expressions is required to configure and use this app effectively. ([RegexOne](https://regexone.com/) offers a good tutorial on regular expressions.)
 
@@ -12,9 +14,9 @@ A firm grasp of regular expressions is required to configure and use this app ef
 
 ### Prerequisites
 
-1. Install Java JDK 8. There are many JDK's; one is [AdoptOpenJDK](https://adoptopenjdk.net), which you can install from [here](https://adoptopenjdk.net/installation.html#).
+1. If you haven't already, install Java JRE 8.
 
-2. To run the tests, install [sbt](https://www.scala-sbt.org/index.html), which you can install from [here](https://www.scala-sbt.org/release/docs/Setup.html).
+2. To run the tests, install JDK 8 and [sbt](https://www.scala-sbt.org/index.html), which you can install from [here](https://www.scala-sbt.org/release/docs/Setup.html).
 
 ### Installing
 
@@ -44,6 +46,7 @@ A firm grasp of regular expressions is required to configure and use this app ef
 ## Running the Tests
 
 Run `sbt test` from the command line.
+
 
 ## Usage
 
@@ -144,6 +147,7 @@ Same as Copy above, but pass the class that contains the main method for zipping
 * [Logback](http://logback.qos.ch/)
 * [picocli](https://picocli.info/)
 * [Zeroturnaround Zip](https://github.com/zeroturnaround/zt-zip)
+
 
 ## Authors
 

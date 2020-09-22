@@ -19,6 +19,8 @@ class DirNodeTest extends AnyFunSuite {
 
   val origDirStr: String = "/Users/ldmay/IdeaProjects/UmmapMriDeidentify/dicom/orig"
   val oneEmptyDirStr: String = "/Users/ldmay/IdeaProjects/UmmapMriDeidentify/dicom/one_empty"
+//  val origDirStr: String = "dicom/orig"
+//  val oneEmptyDirStr: String = "dicom/one_empty"
   val origDirPath: Path = Paths.get(origDirStr)
   val oneEmptyPath: Path = Paths.get(oneEmptyDirStr)
   logger.info(s"origDirStr=${origDirStr}")

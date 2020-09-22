@@ -126,7 +126,7 @@ object Zipper {
       sourceDir.toFile,
       targetZipPath.toFile,
       new NameMapper() {
-        override def map(name: String): String = targetZipPath.getFileName.toString + "/" + name
+        override def map(name: String): String = sourceDir.getFileName.toString + "/" + name
       }
     )
   }
