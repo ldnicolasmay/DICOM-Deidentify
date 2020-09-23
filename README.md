@@ -16,24 +16,24 @@ A firm grasp of regular expressions is required to configure and use this app ef
 
 1. If you haven't already, install Java JRE 8.
 
-2. To run the tests, install JDK 8 and [sbt](https://www.scala-sbt.org/index.html), which you can install from [here](https://www.scala-sbt.org/release/docs/Setup.html).
+2. To recompile/repackage the JARs or run the tests, install Java JDK 8 and [sbt](https://www.scala-sbt.org/index.html). You can install sbt from [here](https://www.scala-sbt.org/release/docs/Setup.html).
 
 ### Installing
 
 1. Navigate to a directory that will be the parent directory of this app.
 
-2. Clone this repository with SSH or HTTPS.
-
-   * SSH Clone
-
-   ```shell script
-   git clone git@git.umms.med.umich.edu:michiganadc/dicom-deidentify.git
-   ```
+2. Clone this repository with HTTPS or SSH. HTTPS will probably be much easier.
 
    * HTTPS Clone
    
    ```shell script
    git clone https://git.umms.med.umich.edu/michiganadc/dicom-deidentify.git
+   ```
+
+   * SSH Clone
+
+   ```shell script
+   git clone git@git.umms.med.umich.edu:michiganadc/dicom-deidentify.git
    ```
 
 3. `cd` into the newly created directory:
@@ -45,7 +45,7 @@ A firm grasp of regular expressions is required to configure and use this app ef
 
 ## Running the Tests
 
-Run `sbt test` from the command line.
+Run `sbt test` from the command line. Make sure you've installed Java JDK 8 and [sbt](https://www.scala-sbt.org/index.html).
 
 
 ## Usage

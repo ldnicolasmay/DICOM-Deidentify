@@ -53,6 +53,7 @@ class Deidentifier(val sourceDirPath: Path) extends FileVisitor[Path] {
    */
   override def visitFile(file: Path, attr: BasicFileAttributes): FileVisitResult = {
     Deidentifier.deidentifyDicomFile(file, attr)
+    logger.info(s"Deidentify ${file.toString}")
 
     CONTINUE
   }

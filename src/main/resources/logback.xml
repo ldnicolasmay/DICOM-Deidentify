@@ -5,7 +5,7 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
+            <level>WARN</level>
         </filter>
         <encoder>
             <pattern>${pattern}</pattern>
@@ -23,7 +23,7 @@
         </encoder>
     </appender>
 
-    <logger name="package" level="INFO" />:w
+    <logger name="package" level="INFO" />
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT" />

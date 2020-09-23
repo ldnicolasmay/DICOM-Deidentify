@@ -6,7 +6,7 @@ import java.util.concurrent.Callable
 import edu.umich.med.alzheimers.dicom.filesystem.DirNode
 import org.slf4j.{Logger, LoggerFactory}
 import picocli.CommandLine
-import picocli.CommandLine.{Command, Option}
+import picocli.CommandLine.Command
 
 /**
  * Driver class
@@ -56,6 +56,7 @@ class Zip extends Callable[Int] {
 }
 
 object Zip {
+  /** Logger */
   val logger: Logger = LoggerFactory.getLogger(classOf[Zip])
 
   def main(args: Array[String]): Unit = {

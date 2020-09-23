@@ -6,7 +6,7 @@ import java.nio.file.{CopyOption, Path, Paths}
 import java.util.concurrent.Callable
 
 import edu.umich.med.alzheimers.dicom.copy.{Copier, CopyConfig}
-import edu.umich.med.alzheimers.dicom.deidentify.{Deidentifier, DeidentifyConfig}
+import edu.umich.med.alzheimers.dicom.deidentify.Deidentifier
 import edu.umich.med.alzheimers.dicom.zip.{Zipper, ZipConfig}
 import edu.umich.med.alzheimers.dicom.filesystem.DirNode
 import org.slf4j.{Logger, LoggerFactory}
@@ -58,19 +58,20 @@ class CopyDeidentifyZip extends Callable[Int] {
     logger.info(s"sourceDirPath=${copySourceDirPath.getFileName.toString}")
     logger.info(s"targetDirPath=${copyTargetDirPath.getFileName.toString}")
 
+    // Capture Package configs
     val intermedDirsRegex: String = copySourceDirPath.getFileName.toString + "|" +
-      CopyConfig.intermedDirsRegexArray.mkString(sep = "|")
-    val dicomFileRegex: String = CopyConfig.dicomFilenameRegexArray.mkString("|")
-    val seriesDescriptionRegex: String = CopyConfig.seriesDescriptionRegexArray.mkString("|")
+      PackageConfig.intermedDirsRegexArray.mkString(sep = "|")
+    val dicomFileRegex: String = PackageConfig.dicomFilenameRegexArray.mkString("|")
+    val seriesDescriptionRegex: String = PackageConfig.seriesDescriptionRegexArray.mkString("|")
     logger.info(s"intermedDirsRegex=${intermedDirsRegex}")
     logger.info(s"dicomFileRegex=${dicomFileRegex}")
     logger.info(s"seriesDescriptionRegex=${seriesDescriptionRegex}")
 
     // Capture Deidentify configs
-    val deidentifySourceDirPath: Path = copySourceDirPath
+    val deidentifySourceDirPath: Path = copyTargetDirPath
 
     // Capture Zip configs
-    val zipSourceDirPath: Path = Paths.get(ZipConfig.sourceDirPathStr)
+    val zipSourceDirPath: Path = deidentifySourceDirPath
     val zipTargetDirPath: Path = Paths.get(ZipConfig.targetDirPathStr)
     val zipDepth: Int = ZipConfig.zipDepth
 
@@ -117,7 +118,6 @@ class CopyDeidentifyZip extends Callable[Int] {
         )
 
     // Deidentify files
-    // val fileDeidentifier = new Deidentifier(deidentifySourceDirPath, copyOptions)
     val deidentifier = new Deidentifier(deidentifySourceDirPath)
     sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot.deidentifyNode(deidentifier)
     logger.info("sourceDirNodeFilteredMinusTargetNodeWithSourceRoot deidentified")
@@ -133,6 +133,7 @@ class CopyDeidentifyZip extends Callable[Int] {
 }
 
 object CopyDeidentifyZip {
+  /** Logger */
   val logger: Logger = LoggerFactory.getLogger(classOf[CopyDeidentifyZip])
 
   def main(args: Array[String]): Unit = {

@@ -15,11 +15,4 @@ object CopyConfig {
 
   val sourceDirPathStr: String = config.getString("config.sourceDirPathStr")
   val targetDirPathStr: String = config.getString("config.targetDirPathStr")
-
-  val intermedDirsRegexArray: Array[String] =
-    config.getStringList("config.intermedDirsRegexArray").asScala.toArray
-  val dicomFilenameRegexArray: Array[String] =
-    config.getStringList("config.dicomFilenameRegexArray").asScala.toArray
-  val seriesDescriptionRegexArray: Array[String] =
-    config.getStringList("config.seriesDescriptionRegexArray").asScala.toArray
 }

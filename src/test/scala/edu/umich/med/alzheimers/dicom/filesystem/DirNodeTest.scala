@@ -2,8 +2,10 @@ package edu.umich.med.alzheimers.dicom.filesystem
 
 import java.nio.file.{Path, Paths}
 
-import edu.umich.med.alzheimers.dicom.filesystem.{DirNode, FileNode}
-import edu.umich.med.alzheimers.dicom._
+import edu.umich.med.alzheimers.dicom.{
+  PackageConfig, childDirNodeExistsIn, childFileNodeExistsIn, dicomFileFilter, dicomFileSeriesDescripFilter,
+  intermedDirNameFilter, nonemptyDirNodesFilter, numberOfFilesFilter
+}
 import org.scalatest.funsuite.AnyFunSuite
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -17,10 +19,9 @@ class DirNodeTest extends AnyFunSuite {
   /** Logger */
   private def logger: Logger = LoggerFactory.getLogger(classOf[DirNodeTest])
 
-  val origDirStr: String = "/Users/ldmay/IdeaProjects/UmmapMriDeidentify/dicom/orig"
-  val oneEmptyDirStr: String = "/Users/ldmay/IdeaProjects/UmmapMriDeidentify/dicom/one_empty"
-//  val origDirStr: String = "dicom/orig"
-//  val oneEmptyDirStr: String = "dicom/one_empty"
+  // TODO: Use and resolve relative paths so that tests can be run on other machines
+  val origDirStr: String = PackageConfig.appDirPath.toString + "/dicom/orig"
+  val oneEmptyDirStr: String = PackageConfig.appDirPath.toString + "/dicom/one_empty"
   val origDirPath: Path = Paths.get(origDirStr)
   val oneEmptyPath: Path = Paths.get(oneEmptyDirStr)
   logger.info(s"origDirStr=${origDirStr}")
@@ -35,6 +36,7 @@ class DirNodeTest extends AnyFunSuite {
     val sourceDirStr: String = origDirStr + "/98890234_20030505_MR/98890234/20030505/MR/MR1"
     val sourceDirPath: Path = Paths.get(sourceDirStr)
     val sourceDirNode: DirNode = DirNode.apply(sourceDirPath, 0, """^MR\d{1,3}$""", """^\d{4,5}$""")
+    sourceDirNode.printNode()
     // assert
     assert(sourceDirNode.countSubNodes() === 3)
   }
@@ -194,7 +196,6 @@ class DirNodeTest extends AnyFunSuite {
     }
   }
 
-  // filterChildFileNodesWith(dicomFileSeriesDescripFilter)
   test("dicomFileSeriesDescripFilter should only keep branches of tree whose " +
     "SeriesDescription matches regex") {
     val origDirNode: DirNode =
@@ -296,7 +297,7 @@ class DirNodeTest extends AnyFunSuite {
         dicomFileRegex = """^\d{4,5}$"""
       )
     val foundDirNode: Any = mrDirNode.findDirNode(mr1DirStr) match {
-      case Some(dn) => dn
+      case Some(dirNode) => dirNode
       case None => ()
     }
     // assert
@@ -325,7 +326,7 @@ class DirNodeTest extends AnyFunSuite {
         depth = 1
       )
     val foundFileNode: Any = mr1DirNode.findFileNode(mr1_4919_FileStr) match {
-      case Some(fn) => fn
+      case Some(fileNode) => fileNode
       case None => ()
     }
     // assert
