@@ -36,7 +36,6 @@ class DirNodeTest extends AnyFunSuite {
     val sourceDirStr: String = origDirStr + "/98890234_20030505_MR/98890234/20030505/MR/MR1"
     val sourceDirPath: Path = Paths.get(sourceDirStr)
     val sourceDirNode: DirNode = DirNode.apply(sourceDirPath, 0, """^MR\d{1,3}$""", """^\d{4,5}$""")
-    sourceDirNode.printNode()
     // assert
     assert(sourceDirNode.countSubNodes() === 3)
   }
@@ -286,8 +285,7 @@ class DirNodeTest extends AnyFunSuite {
         intermedDirsRegex = """^MR\d{1,3}$""",
         dicomFileRegex = """^\d{4,5}$"""
       )
-    val mr1DirStr: String =
-      "/Users/ldmay/IdeaProjects/UmmapMriDeidentify/dicom/orig/98890234_20030505_MR/98890234/20030505/MR/MR1"
+    val mr1DirStr: String = origDirStr + "/dicom/orig/98890234_20030505_MR/98890234/20030505/MR/MR1"
     val mr1DirPath: Path = Paths.get(mr1DirStr)
     val mr1DirNode: DirNode =
       DirNode.apply(
@@ -308,8 +306,7 @@ class DirNodeTest extends AnyFunSuite {
 
   // findFileNode
   test("findFileNode ...") {
-    val mr1DirStr: String =
-      "/Users/ldmay/IdeaProjects/UmmapMriDeidentify/dicom/orig/98890234_20030505_MR/98890234/20030505/MR/MR1"
+    val mr1DirStr: String = origDirStr + "/98890234_20030505_MR/98890234/20030505/MR/MR1"
     val mr1DirPath: Path = Paths.get(mr1DirStr)
     val mr1DirNode: DirNode =
       DirNode.apply(
