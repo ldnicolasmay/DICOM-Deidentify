@@ -14,9 +14,9 @@ A firm grasp of regular expressions is required to configure and use this app ef
 
 ### Prerequisites
 
-1. If you haven't already, install Java JRE 8.
+1. If you haven't already, install Java JDK 8.
 
-2. To recompile/repackage the JARs or run the tests, install Java JDK 8 and [sbt](https://www.scala-sbt.org/index.html). You can install sbt from [here](https://www.scala-sbt.org/release/docs/Setup.html).
+2. To recompile/repackage the JARs or run the tests, install [sbt](https://www.scala-sbt.org/index.html). You can install sbt from [here](https://www.scala-sbt.org/release/docs/Setup.html).
 
 ### Installing
 
@@ -41,12 +41,23 @@ A firm grasp of regular expressions is required to configure and use this app ef
    ```shell script
    cd ./dicom-deidentify
    ```
+   
+4. Using sbt, make sure the app compiles:
+
+   ```shell script
+   sbt compile
+   ```
 
 
 ## Running the Tests
 
-Run `sbt test` from the command line. Make sure you've installed Java JDK 8 and [sbt](https://www.scala-sbt.org/index.html).
+Run `sbt test` from the command line: 
 
+```sbtshell
+sbt test
+```
+
+**Note**: This will return failed tests until the app is properly configured.
 
 ## Usage
 
@@ -78,6 +89,15 @@ There are three config files, one for each step in the deidentification process:
 
 `targetDirPathStr`: Path string of the target directory that the zipped directories or zipped DICOM files will be placed in. Note that the directory tree above any zipped directory or DICOM file is preserved.
 
+### Package JAR with sbt
+
+Now that you've got the app configured, package it into a JAR file using sbt:
+
+```shell script
+sbt package
+```
+
+This will build a JAR file, `target/scala-2.13/dicom-deidentify_2.13-0.1.jar`.
 
 ### Running sbt-packaged JAR
 
@@ -156,6 +176,6 @@ Same as Copy above, but pass the class that contains the main method for zipping
 
 ## Acknowledgments
 
-Thanks to Dr. David A. Clunie for their [PixelMed Java DICOM Toolkit](https://www.pixelmed.com/dicomtoolkit.html).
+Thanks to Dr. David A. Clunie for his [PixelMed Java DICOM Toolkit](https://www.pixelmed.com/dicomtoolkit.html).
 
-Thanks also to Saravanan Subramainian for their [DICOM Tutorials](https://saravanansubramanian.com/dicomtutorials/).
+Thanks also to Saravanan Subramainian for his [DICOM Tutorials](https://saravanansubramanian.com/dicomtutorials/).
