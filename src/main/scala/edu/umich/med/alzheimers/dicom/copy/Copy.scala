@@ -71,7 +71,10 @@ class Copy extends Callable[Int] {
     // Substitute target DirNode tree root path with source DirNode tree root path,
     // facilitating identification of source- and target- DirNode tree discrepancies
     val targetDirNodeWithSourceRoot = targetDirNode
-      .substituteRootNodeName(targetDirNode.dirPath.getFileName.toString, sourceDirNode.dirPath.getFileName.toString)
+      .substituteRootNodeName(
+        targetDirNode.dirPath.getFileName.toString,
+        sourceDirNode.dirPath.getFileName.toString
+      )
     logger.info(s"targetDirNodeWithSourceRoot, ${targetDirNodeWithSourceRoot.countSubNodes()} nodes")
 
     // Filter source DirNode tree based for files that do NOT already exist in target DirNode tree

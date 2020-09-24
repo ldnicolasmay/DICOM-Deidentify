@@ -5,8 +5,11 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.FileVisitResult._
 import java.nio.file.{FileVisitResult, FileVisitor, Path}
 
+import edu.umich.med.alzheimers.dicom.PackageConfig
 import com.pixelmed.dicom.{Attribute, AttributeList, AttributeTag, DicomDictionary, DicomException, TagFromName}
 import org.slf4j.{Logger, LoggerFactory}
+
+import scala.util.matching.Regex
 
 /**
  * DICOM file deidentifier implementing Java `FileVisitor`
@@ -131,12 +134,16 @@ object Deidentifier {
    * @param attrList  `AttributeList` from DICOM file
    */
   private def reformatPatientId(dicomFile: Path, attrList: AttributeList): Unit = {
-    val idPrefix = """^hlp17umm|^bmh17umm|^hlp14umm|^17umm""".r
+    val idPrefixStrings: List[String] = PackageConfig.idPrefixStringArray.toList
+    val idPrefixRegexes: List[Regex] = idPrefixStrings.map(new Regex(_))
+    val idPrefixRegex = new Regex(idPrefixRegexes.mkString("|"))
+    val idStrings = idPrefixRegexes.map(_.toString + "\\d{5}$")
+    val idString = idStrings.mkString("|")
     val patientIdBefore: String =
       Attribute.getDelimitedStringValuesOrEmptyString(attrList, TagFromName.PatientID)
 
-    if (patientIdBefore.matches("""^hlp17umm\d{5}$|^bmh17umm\d{5}$|^hlp14umm\d{5}$|^17umm\d{5}$""")) {
-      val patientIdAfter: String = idPrefix.replaceFirstIn(patientIdBefore, "UM000")
+    if (patientIdBefore.matches(idString)) {
+      val patientIdAfter: String = idPrefixRegex.replaceFirstIn(patientIdBefore, "UM000")
       attrList.replaceWithValueIfPresent(TagFromName.PatientID, patientIdAfter)
     } else {
       throw new Exception(s"PatientID $patientIdBefore in ${dicomFile.toString} does not match expected format")

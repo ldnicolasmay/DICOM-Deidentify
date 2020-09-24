@@ -27,8 +27,9 @@ object PackageConfig {
   val seriesDescriptionRegexArray: Array[String] =
     config.getStringList("config.seriesDescriptionRegexArray").asScala.toArray
 
-
   val intermedDirsRegex: String = PackageConfig.intermedDirsRegexArray.mkString(sep = "|")
   val dicomFileRegex: String = PackageConfig.dicomFilenameRegexArray.mkString("|")
   val seriesDescriptionRegex: String = PackageConfig.seriesDescriptionRegexArray.mkString("|")
+
+  val idPrefixStringArray: Array[String] = config.getStringList("config.idPrefixStringArray").asScala.toArray
 }
