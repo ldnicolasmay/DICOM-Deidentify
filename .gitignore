@@ -2,12 +2,7 @@
 .idea/
 archive/
 out/
-target/scala-2.13/classes/
-target/scala-2.13/test-classes/
-target/scala-2.13/update/
-target/scala-2.13/api/
-target/streams/
-target/test-reports/
+target/
 log/
 
 pixelmedjavadicom*/
@@ -17,3 +12,4 @@ lib/docs/
 *.log
 *.class
 *.cache
+*.conf
