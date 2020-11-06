@@ -1,5 +1,5 @@
 # Zip Config
-config{
+config {
   sourceDirPathStr = "/Users/ldmay/MRI/dicom_target",
   targetDirPathStr = "/Users/ldmay/MRI/dicom_target_zip",
   zipDepth = 1

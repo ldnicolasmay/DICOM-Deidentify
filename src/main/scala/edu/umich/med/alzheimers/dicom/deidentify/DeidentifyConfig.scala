@@ -11,9 +11,11 @@ import scala.jdk.CollectionConverters._
  */
 object DeidentifyConfig {
 
-  private val config: Config = ConfigFactory.parseFile(new File("src/main/resources/config/deidentify.conf"))
+  private val config: Config =
+    ConfigFactory.parseFile(new File("src/main/resources/config/deidentify_test.conf"))
 
   val sourceDirPathStr: String = config.getString("config.sourceDirPathStr")
+  val reformatPatientId: Boolean = config.getBoolean("config.reformatPatientId")
   val dicomAttributesToReplaceWithZero: List[String] =
     config.getStringList("config.dicomAttributesToReplaceWithZero").asScala.toList
 }

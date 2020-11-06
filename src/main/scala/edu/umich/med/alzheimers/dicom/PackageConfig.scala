@@ -12,8 +12,8 @@ import scala.jdk.CollectionConverters._
  */
 object PackageConfig {
 
-  // private val config: Config = ConfigFactory.parseFile(new File("src/main/resources/config/package.conf"))
-  private val configPath: Path = Paths.get("src/main/resources/config/package.conf")
+  private val configPath: Path =
+    Paths.get("src/main/resources/config/package_test.conf")
   private val configFile: File = configPath.toFile
   private val config: Config = ConfigFactory.parseFile(configFile)
 
@@ -32,4 +32,5 @@ object PackageConfig {
   val seriesDescriptionRegex: String = PackageConfig.seriesDescriptionRegexArray.mkString("|")
 
   val idPrefixStringArray: Array[String] = config.getStringList("config.idPrefixStringArray").asScala.toArray
+  val expectedIdPrefixStr: String = config.getString("config.expectedIdPrefixStr")
 }

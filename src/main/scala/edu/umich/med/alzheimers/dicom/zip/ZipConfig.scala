@@ -6,7 +6,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 
 object ZipConfig {
 
-  private val config: Config = ConfigFactory.parseFile(new File("src/main/resources/config/zip.conf"))
+  private val config: Config =
+    ConfigFactory.parseFile(new File("src/main/resources/config/zip_test.conf"))
 
   val sourceDirPathStr: String = config.getString("config.sourceDirPathStr")
   val targetDirPathStr: String = config.getString("config.targetDirPathStr")

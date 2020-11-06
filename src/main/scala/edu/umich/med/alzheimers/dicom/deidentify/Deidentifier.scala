@@ -24,11 +24,11 @@ class Deidentifier(val sourceDirPath: Path) extends FileVisitor[Path] {
   /**
    * Performs actions before visiting a directory
    *
-   * @param dir  `Path` of directory to act on before visit
-   * @param attr `BasicFileAttributes` of `dir`
+   * @param dir   `Path` of directory to act on before visit
+   * @param attrs `BasicFileAttributes` of `dir`
    * @return `FileVisitResult` to `CONTINUE` or `SKIP_SUBTREE`
    */
-  override def preVisitDirectory(dir: Path, attr: BasicFileAttributes): FileVisitResult = {
+  override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = {
     CONTINUE
   }
 
@@ -36,11 +36,11 @@ class Deidentifier(val sourceDirPath: Path) extends FileVisitor[Path] {
    * Performs actions after visiting a directory
    *
    * @param dir `Path` of directory to act on after visit
-   * @param e   `IOException` thrown from directory visit
+   * @param exc `IOException` thrown from directory visit
    * @return `FileVisitResult` to `CONTINUE`
    */
-  override def postVisitDirectory(dir: Path, e: IOException): FileVisitResult = {
-    if (e != null) {
+  override def postVisitDirectory(dir: Path, exc: IOException): FileVisitResult = {
+    if (exc != null) {
       logger.error(s"Error during deidentification within ${dir.toString}")
     }
 
@@ -50,12 +50,12 @@ class Deidentifier(val sourceDirPath: Path) extends FileVisitor[Path] {
   /**
    * Performs actions when visiting a file
    *
-   * @param file `Path` of file to visit
-   * @param attr `BasicFileAttributes` of file
+   * @param file  `Path` of file to visit
+   * @param attrs `BasicFileAttributes` of file
    * @return `FileVisitResult` to `CONTINUE`
    */
-  override def visitFile(file: Path, attr: BasicFileAttributes): FileVisitResult = {
-    Deidentifier.deidentifyDicomFile(file, attr)
+  override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
+    Deidentifier.deidentifyDicomFile(file, attrs, reformatPatientId = DeidentifyConfig.reformatPatientId)
     logger.info(s"Deidentify ${file.toString}")
 
     CONTINUE
@@ -65,11 +65,13 @@ class Deidentifier(val sourceDirPath: Path) extends FileVisitor[Path] {
    * Performs actions when visiting a file fails
    *
    * @param file `File` whose visit failed
-   * @param e    `IOException` thrown by failed file visit
+   * @param exc  `IOException` thrown by failed file visit
    * @return `FileVisitResult` to `CONTINUE`
    */
-  override def visitFileFailed(file: Path, e: IOException): FileVisitResult = {
-    logger.error(s"visitFileFailed=${file.toString}")
+  override def visitFileFailed(file: Path, exc: IOException): FileVisitResult = {
+    if (exc != null) {
+      logger.error(s"visitFileFailed=${file.toString}")
+    }
 
     CONTINUE
   }
@@ -91,12 +93,16 @@ object Deidentifier {
    */
   def deidentifyDicomFile(
                            sourceDicomFile: Path,
-                           attr: BasicFileAttributes): Unit = {
+                           attr: BasicFileAttributes,
+                           reformatPatientId: Boolean
+                         ): Unit = {
     // 1 Get DICOM targetFile AttributeList
     val attrList = Deidentifier.getAttributeListFromPath(sourceDicomFile)
 
     // 2 Reformat PatientID string: hlp17umm01234 => UM00001234
-    Deidentifier.reformatPatientId(sourceDicomFile, attrList)
+    if (reformatPatientId) {
+      Deidentifier.reformatPatientId(sourceDicomFile, attrList)
+    }
 
     // 3 Replace/remove private DICOM elements/attributes
     Deidentifier.replacePrivateDicomElements(sourceDicomFile, attrList)
@@ -115,8 +121,9 @@ object Deidentifier {
   private def getAttributeListFromPath(dicomFile: Path): AttributeList = {
     val attrList = new AttributeList
 
-    try
+    try {
       attrList.read(dicomFile.toString)
+    }
     catch {
       case e: DicomException =>
         logger.error(s"getAttributeListFromPath(${dicomFile.toString}): $e")
@@ -143,9 +150,10 @@ object Deidentifier {
       Attribute.getDelimitedStringValuesOrEmptyString(attrList, TagFromName.PatientID)
 
     if (patientIdBefore.matches(idString)) {
-      val patientIdAfter: String = idPrefixRegex.replaceFirstIn(patientIdBefore, "UM000")
+      val patientIdAfter: String = idPrefixRegex.replaceFirstIn(patientIdBefore, PackageConfig.expectedIdPrefixStr)
       attrList.replaceWithValueIfPresent(TagFromName.PatientID, patientIdAfter)
-    } else {
+    }
+    else {
       throw new Exception(s"PatientID $patientIdBefore in ${dicomFile.toString} does not match expected format")
     }
   }
@@ -159,7 +167,8 @@ object Deidentifier {
   private def fromStringToAttributeTag(tagString: String): AttributeTag = {
     try {
       DicomDictionary.StandardDictionary.getTagFromName(tagString)
-    } catch {
+    }
+    catch {
       case e: DicomException =>
         logger.error(s"Error getting tag ${tagString} in fomStringToAttributeTag(): ${e.toString}")
         DicomDictionary.StandardDictionary.getTagFromName("")
@@ -188,7 +197,8 @@ object Deidentifier {
   private def removePrivateElements(dicomFile: Path, attrList: AttributeList): Unit = {
     try {
       attrList.removePrivateAttributes()
-    } catch {
+    }
+    catch {
       case e: DicomException =>
         logger.error(s"removePrivateElements(${dicomFile.toString}, ...): $e")
     }

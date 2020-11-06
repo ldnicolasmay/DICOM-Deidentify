@@ -6,6 +6,7 @@ import java.nio.file.{DirectoryStream, Files, Path}
 
 import edu.umich.med.alzheimers.dicom.copy.Copier
 import edu.umich.med.alzheimers.dicom.deidentify.Deidentifier
+import edu.umich.med.alzheimers.dicom.upload.Uploader
 import edu.umich.med.alzheimers.dicom.zip.Zipper
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -16,7 +17,7 @@ import scala.util.{Failure, Success, Try, Using}
  * Representation of directories in file system, a hierarchical tree structure
  *
  * @param dirPath           `Path` of directory
- * @param attr              `BasicFileAttributes` object of directory
+ * @param attrs             `BasicFileAttributes` object of directory
  * @param depth             `Int` depth of `DirNode` object within its `DirNode` tree
  * @param childDirNodes     `List` of child `DirNode` objects
  * @param childFileNodes    `List` of child `FileNode` objects
@@ -25,7 +26,7 @@ import scala.util.{Failure, Success, Try, Using}
  */
 case class DirNode(
                     dirPath: Path,
-                    attr: BasicFileAttributes,
+                    attrs: BasicFileAttributes,
                     depth: Int,
                     childDirNodes: List[DirNode],
                     childFileNodes: List[FileNode],
@@ -96,7 +97,7 @@ case class DirNode(
       .map(_.filterChildDirNodesWith(predicate))
       .filter(predicate)
 
-    this.copy(dirPath, attr, depth, filteredChildDirs, childFileNodes)
+    this.copy(dirPath, attrs, depth, filteredChildDirs, childFileNodes)
   }
 
   /**
@@ -110,7 +111,7 @@ case class DirNode(
       .map(_.filterChildDirNodesWith(predicate))
       .filterNot(predicate)
 
-    this.copy(dirPath, attr, depth, filteredChildDirs, childFileNodes)
+    this.copy(dirPath, attrs, depth, filteredChildDirs, childFileNodes)
   }
 
   /**
@@ -123,7 +124,7 @@ case class DirNode(
     val filteredChildFiles = childFileNodes.filter(predicate)
     val filteredChildDirs = childDirNodes.map(_.filterChildFileNodesWith(predicate))
 
-    this.copy(dirPath, attr, depth, filteredChildDirs, filteredChildFiles)
+    this.copy(dirPath, attrs, depth, filteredChildDirs, filteredChildFiles)
   }
 
   /**
@@ -136,7 +137,7 @@ case class DirNode(
     val filteredChildFiles = childFileNodes.filterNot(predicate)
     val filteredChildDirs = childDirNodes.map(_.filterNotChildFileNodesWith(predicate))
 
-    this.copy(dirPath, attr, depth, filteredChildDirs, filteredChildFiles)
+    this.copy(dirPath, attrs, depth, filteredChildDirs, filteredChildFiles)
   }
 
   /**
@@ -161,7 +162,8 @@ case class DirNode(
             .subpath(0, nameIndex)
             .resolve(newName)
         )
-      } else {
+      }
+      else {
         dirPath.getRoot.resolve(
           dirPath
             .subpath(0, nameIndex)
@@ -175,7 +177,7 @@ case class DirNode(
     val newChildDirNodes: List[DirNode] =
       childDirNodes.map(_.substituteRootNodeName(oldName, newName))
 
-    DirNode(newPath, attr, depth, newChildDirNodes, newChildFileNodes, intermedDirsRegex, dicomFileRegex)
+    DirNode(newPath, attrs, depth, newChildDirNodes, newChildFileNodes, intermedDirsRegex, dicomFileRegex)
   }
 
   /* Methods that return `Option` objects */
@@ -221,7 +223,7 @@ case class DirNode(
     var exc: IOException = null
 
     try {
-      copier.preVisitDirectory(dirPath, attr)
+      copier.preVisitDirectory(dirPath, attrs)
     }
     catch {
       case e: IOException =>
@@ -244,7 +246,7 @@ case class DirNode(
     var exc: IOException = null
 
     try {
-      deidentifier.preVisitDirectory(dirPath, attr)
+      deidentifier.preVisitDirectory(dirPath, attrs)
     }
     catch {
       case e: IOException =>
@@ -267,7 +269,7 @@ case class DirNode(
     var exc: IOException = null
 
     try {
-      zipper.preVisitDirectory(dirPath, attr)
+      zipper.preVisitDirectory(dirPath, attrs)
     }
     catch {
       case e: IOException =>
@@ -285,6 +287,33 @@ case class DirNode(
     childFileNodes.foreach(_.zipNode(newFileZipper))
 
     zipper.postVisitDirectory(dirPath, exc)
+  }
+
+  def uploadNode(uploader: Uploader): Unit = {
+    var exc: IOException = null
+
+    try {
+      uploader.preVisitDirectory(dirPath, attrs)
+    }
+    catch {
+      case e: IOException =>
+        exc = e
+        logger.error(e.toString)
+    }
+
+    val newFileUploader = new Uploader(
+      uploader.sourceDirPath,
+      uploader.nodeDepth + 1,
+      uploader.zipDepth,
+      uploader.s3BucketStr,
+      uploader.s3KeyPrefixStr,
+      uploader.awsAccessKeyId,
+      uploader.awsSecretAccessKey
+    )
+    childDirNodes.foreach(_.uploadNode(newFileUploader))
+    childFileNodes.foreach(_.uploadNode(newFileUploader))
+
+    uploader.postVisitDirectory(dirPath, exc)
   }
 
 }
@@ -323,7 +352,7 @@ object DirNode {
       }
     }
 
-    val attr: BasicFileAttributes = Files.readAttributes(dirPath, classOf[BasicFileAttributes])
+    val attrs: BasicFileAttributes = Files.readAttributes(dirPath, classOf[BasicFileAttributes])
 
     val children: Try[(List[DirNode], List[FileNode])] = Using.Manager { use =>
       // Use one Java Directory Stream
@@ -358,7 +387,7 @@ object DirNode {
       case Failure(_) => List()
     }
 
-    this (dirPath, attr, depth, derivedChildDirNodes, derivedChildFileNodes, intermedDirsRegex, dicomFileRegex)
+    this (dirPath, attrs, depth, derivedChildDirNodes, derivedChildFileNodes, intermedDirsRegex, dicomFileRegex)
   }
 
 }

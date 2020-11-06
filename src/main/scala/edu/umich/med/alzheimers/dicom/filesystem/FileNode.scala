@@ -6,6 +6,7 @@ import java.nio.file.{Files, Path}
 
 import edu.umich.med.alzheimers.dicom.copy.Copier
 import edu.umich.med.alzheimers.dicom.deidentify.Deidentifier
+import edu.umich.med.alzheimers.dicom.upload.Uploader
 import edu.umich.med.alzheimers.dicom.zip.Zipper
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -16,12 +17,12 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
  *
  * @param filePath `Path` of file
  * @param depth    `Int` depth of `FileNode` object in `DirNode` tree containing it
- * @param attr     `BasicFileAttributes` object of file
+ * @param attrs    `BasicFileAttributes` object of file
  */
 case class FileNode(
                      filePath: Path,
                      depth: Int,
-                     attr: BasicFileAttributes)
+                     attrs: BasicFileAttributes)
   extends Node {
 
   /** Logger */
@@ -50,8 +51,9 @@ case class FileNode(
    */
   def copyNode(copier: Copier): Unit = {
     try {
-      copier.visitFile(filePath, attr)
-    } catch {
+      copier.visitFile(filePath, attrs)
+    }
+    catch {
       case e: IOException => copier.visitFileFailed(filePath, e)
     }
   }
@@ -63,8 +65,9 @@ case class FileNode(
    */
   def deidentifyNode(deidentifier: Deidentifier): Unit = {
     try {
-      deidentifier.visitFile(filePath, attr)
-    } catch {
+      deidentifier.visitFile(filePath, attrs)
+    }
+    catch {
       case e: IOException => deidentifier.visitFileFailed(filePath, e)
     }
   }
@@ -76,9 +79,19 @@ case class FileNode(
    */
   def zipNode(zipper: Zipper): Unit = {
     try {
-      zipper.visitFile(filePath, attr)
-    } catch {
+      zipper.visitFile(filePath, attrs)
+    }
+    catch {
       case e: IOException => zipper.visitFileFailed(filePath, e)
+    }
+  }
+
+  def uploadNode(uploader: Uploader): Unit = {
+    try {
+      uploader.visitFile(filePath, attrs)
+    }
+    catch {
+      case e: IOException => uploader.visitFileFailed(filePath, e)
     }
   }
 
@@ -145,8 +158,8 @@ object FileNode {
    * @return
    */
   def apply(filePath: Path, depth: Int): FileNode = {
-    val attr = Files.readAttributes(filePath, classOf[BasicFileAttributes])
+    val attrs = Files.readAttributes(filePath, classOf[BasicFileAttributes])
 
-    this (filePath, depth, attr)
+    this (filePath, depth, attrs)
   }
 }

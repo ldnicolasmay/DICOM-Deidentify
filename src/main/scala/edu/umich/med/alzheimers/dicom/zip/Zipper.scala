@@ -29,22 +29,24 @@ class Zipper(
   /**
    * Performs actions before visiting a directory
    *
-   * @param dir  `Path` of directory to act on before visit
-   * @param attr `BasicFileAttributes` of `dir`
-   * @return `FileVisitResult` to `CONTINUE` or `SKIP_SUBTREE`
+   * @param dir   `Path` of directory to act on before visit
+   * @param attrs `BasicFileAttributes` of `dir`
+   * @return `FileVisitResult` to `CONTINUE`, `SKIP_SUBTREE`, or `SKIP_SIBLINGS`
    */
-  override def preVisitDirectory(dir: Path, attr: BasicFileAttributes): FileVisitResult = {
+  override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = {
     val target: Path = targetDirPath.resolve(sourceDirPath.relativize(dir))
 
     if (nodeDepth < zipDepth) {
       logger.info(s"Create directory ${target.toString} with nodeDepth=${nodeDepth}")
       Files.createDirectory(target)
       CONTINUE
-    } else if (nodeDepth == zipDepth) {
+    }
+    else if (nodeDepth == zipDepth) {
       logger.info(s"Zip ${dir.toString} to ${target.toString} with nodeDepth=${nodeDepth}, zipDepth=${zipDepth}")
-      Zipper.zipDirectory(dir, attr, target)
+      Zipper.zipDirectory(dir, attrs, target)
       SKIP_SUBTREE
-    } else {
+    }
+    else {
       SKIP_SIBLINGS
     }
   }
@@ -53,11 +55,11 @@ class Zipper(
    * Performs actions after visiting a directory
    *
    * @param dir `Path` of directory to act on after visit
-   * @param e   `IOException` thrown from directory visit
+   * @param exc `IOException` thrown from directory visit
    * @return `FileVisitResult` to `CONTINUE`
    */
-  override def postVisitDirectory(dir: Path, e: IOException): FileVisitResult = {
-    if (e != null) {
+  override def postVisitDirectory(dir: Path, exc: IOException): FileVisitResult = {
+    if (exc != null) {
       logger.error(s"Error during zip of ${dir.toString}")
     }
 
@@ -67,21 +69,23 @@ class Zipper(
   /**
    * Performs actions when visiting a file
    *
-   * @param file `Path` of file to visit
-   * @param attr `BasicFileAttributes` of file
-   * @return `FileVisitResult` to `CONTINUE`, `SKIP_SUBTREE`, `SKIP_SIBLINGS`
+   * @param file  `Path` of file to visit
+   * @param attrs `BasicFileAttributes` of file
+   * @return `FileVisitResult` to `CONTINUE`, `SKIP_SUBTREE`, or `SKIP_SIBLINGS`
    */
-  override def visitFile(file: Path, attr: BasicFileAttributes): FileVisitResult = {
+  override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
     val target = targetDirPath.resolve(sourceDirPath.relativize(file))
 
     if (nodeDepth < zipDepth) {
       Files.createDirectory(target)
       CONTINUE
-    } else if (nodeDepth == zipDepth) {
+    }
+    else if (nodeDepth == zipDepth) {
       logger.info(s"Zip ${file.toString} to ${target.toString} with depth ${nodeDepth} @ depth ${zipDepth}")
-      Zipper.zipFile(file, attr, target)
+      Zipper.zipFile(file, attrs, target)
       SKIP_SUBTREE
-    } else {
+    }
+    else {
       SKIP_SIBLINGS
     }
   }
@@ -90,11 +94,13 @@ class Zipper(
    * Performs actions when visiting a file fails
    *
    * @param file `Path` of file whose visit failed
-   * @param e    `IOException` thrown by failed file visit
+   * @param exc  `IOException` thrown by failed file visit
    * @return `FileVisitResult` to `CONTINUE`
    */
-  override def visitFileFailed(file: Path, e: IOException): FileVisitResult = {
-    logger.error(s"visitFileFailed=${file.toString}")
+  override def visitFileFailed(file: Path, exc: IOException): FileVisitResult = {
+    if (exc != null) {
+      logger.error(s"visitFileFailed=${file.toString}")
+    }
 
     CONTINUE
   }
@@ -113,12 +119,12 @@ object Zipper {
    * Zip directory
    *
    * @param sourceDir `Path` of source directory to zip
-   * @param attr      `BasicAttributeList` of directory to zip
+   * @param attrs     `BasicAttributeList` of directory to zip
    * @param targetDir `Path` of target directory to place zipped directories
    */
   def zipDirectory(
                     sourceDir: Path,
-                    attr: BasicFileAttributes,
+                    attrs: BasicFileAttributes,
                     targetDir: Path): Unit = {
     val targetZipPath: Path = Paths.get(targetDir.toString + ".zip")
 
@@ -135,13 +141,13 @@ object Zipper {
    * Zip file
    *
    * @param sourceFile `Path` of source file to zip
-   * @param attr       `BasicAttributeList` of file to zip
+   * @param attrs      `BasicAttributeList` of file to zip
    * @param targetFile `Path` of target file to place zipped files
    */
 
   def zipFile(
                sourceFile: Path,
-               attr: BasicFileAttributes,
+               attrs: BasicFileAttributes,
                targetFile: Path): Unit = {
     val targetZipPath: Path = Paths.get(targetFile.toString + ".zip")
 

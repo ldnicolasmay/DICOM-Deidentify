@@ -3,6 +3,7 @@
 archive/
 out/
 target/
+project/target/
 
 pixelmedjavadicom*/
 lib/docs/

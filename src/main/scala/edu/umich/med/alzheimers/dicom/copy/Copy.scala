@@ -55,8 +55,10 @@ class Copy extends Callable[Int] {
     // Create source and target DirNode trees
     val sourceDirNode = DirNode(sourceDirPath, 0, intermedDirsRegex, dicomFileRegex)
     logger.info(s"sourceDirNode=${sourceDirNode.dirPath.toString}")
+    logger.info(s"sourceDirNode, ${sourceDirNode.countSubNodes()} nodes")
     val targetDirNode = DirNode(targetDirPath, 0, intermedDirsRegex, dicomFileRegex)
     logger.info(s"targetDirNode=${targetDirNode.dirPath.toString}")
+    logger.info(s"targetDirNode, ${targetDirNode.countSubNodes()} nodes")
 
     // Filter source DirNode tree using regexes and focused filters
     val sourceDirNodeFiltered = sourceDirNode

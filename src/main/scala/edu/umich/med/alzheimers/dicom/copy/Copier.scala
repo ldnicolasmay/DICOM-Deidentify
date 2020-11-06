@@ -27,11 +27,11 @@ class Copier(
   /**
    * Performs actions before visiting a directory
    *
-   * @param dir  `Path` of directory to act on before visit
-   * @param attr `BasicFileAttributes` of `dir`
+   * @param dir   `Path` of directory to act on before visit
+   * @param attrs `BasicFileAttributes` of `dir`
    * @return `FileVisitResult` to `CONTINUE` or `SKIP_SUBTREE`
    */
-  override def preVisitDirectory(dir: Path, attr: BasicFileAttributes): FileVisitResult = {
+  override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = {
     val target: Path = targetDirPath.resolve(sourceDirPath.relativize(dir))
 
     try {
@@ -54,11 +54,11 @@ class Copier(
    * Performs actions after visiting a directory
    *
    * @param dir `Path` of directory to act on after visit
-   * @param e   `IOException` thrown from directory visit
+   * @param exc `IOException` thrown from directory visit
    * @return `FileVisitResult` to CONTINUE
    */
-  override def postVisitDirectory(dir: Path, e: IOException): FileVisitResult = {
-    if (e == null) {
+  override def postVisitDirectory(dir: Path, exc: IOException): FileVisitResult = {
+    if (exc == null) {
       val target = targetDirPath.resolve(sourceDirPath.relativize(dir))
 
       try {
@@ -79,11 +79,11 @@ class Copier(
   /**
    * Performs actions when visiting a file
    *
-   * @param file `Path` of file to visit
-   * @param attr `BasicFileAttributes` of file
+   * @param file  `Path` of file to visit
+   * @param attrs `BasicFileAttributes` of file
    * @return `FileVisitResult` to `CONTINUE`
    */
-  override def visitFile(file: Path, attr: BasicFileAttributes): FileVisitResult = {
+  override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
     val target = targetDirPath.resolve(sourceDirPath.relativize(file))
 
     Copier.copyFile(file, target, copyOptions)
@@ -96,11 +96,13 @@ class Copier(
    * Performs actions when visiting a file fails
    *
    * @param file `Path` of file whose visit failed
-   * @param e    `IOException` thrown by failed file visit
+   * @param exc  `IOException` thrown by failed file visit
    * @return `FileVisitResult` to `CONTINUE`
    */
-  override def visitFileFailed(file: Path, e: IOException): FileVisitResult = {
-    logger.error(s"Unable to copy: visitFileFailed(${file.toString}): $e")
+  override def visitFileFailed(file: Path, exc: IOException): FileVisitResult = {
+    if (exc != null) {
+      logger.error(s"Unable to copy: visitFileFailed(${file.toString}): ${exc}")
+    }
 
     CONTINUE
   }
