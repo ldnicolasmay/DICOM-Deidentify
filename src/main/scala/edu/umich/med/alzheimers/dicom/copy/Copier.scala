@@ -33,10 +33,13 @@ class Copier(
    */
   override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = {
     val target: Path = targetDirPath.resolve(sourceDirPath.relativize(dir))
+    val targetExists: Boolean = Files.exists(target)
 
     try {
-      Files.copy(dir, target, copyOptions: _*)
-      logger.info(s"Copy ${dir.toString} to ${target.toString}")
+      if (!targetExists) {
+        Files.copy(dir, target, copyOptions: _*)
+        logger.info(s"Copy ${dir.toString} to ${target.toString}")
+      }
     }
     catch {
       case e: DirectoryNotEmptyException =>

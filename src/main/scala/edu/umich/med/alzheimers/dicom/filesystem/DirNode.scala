@@ -304,7 +304,7 @@ case class DirNode(
     val newFileUploader = new Uploader(
       uploader.sourceDirPath,
       uploader.nodeDepth + 1,
-      uploader.zipDepth,
+      uploader.uploadDepth,
       uploader.s3BucketStr,
       uploader.s3KeyPrefixStr,
       uploader.awsAccessKeyId,

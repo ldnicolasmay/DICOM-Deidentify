@@ -22,9 +22,11 @@ package object dicom {
    * @param nextTag `AttributeTag` object that's just past tag to retrieve
    * @return `String` of DICOM sequence series description
    */
-  private def getAttributeValueFromPathTagNextTag(file: Path,
-                                                  tag: AttributeTag,
-                                                  nextTag: AttributeTag): String = {
+  private def getAttributeValueFromPathTagNextTag(
+                                                   file: Path,
+                                                   tag: AttributeTag,
+                                                   nextTag: AttributeTag
+                                                 ): String = {
     val attrList = new AttributeList
 
     val readStopByteOffset: Long = try {

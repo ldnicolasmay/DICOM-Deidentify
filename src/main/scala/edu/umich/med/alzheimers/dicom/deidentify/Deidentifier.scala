@@ -141,16 +141,16 @@ object Deidentifier {
    * @param attrList  `AttributeList` from DICOM file
    */
   private def reformatPatientId(dicomFile: Path, attrList: AttributeList): Unit = {
-    val idPrefixStrings: List[String] = PackageConfig.idPrefixStringArray.toList
-    val idPrefixRegexes: List[Regex] = idPrefixStrings.map(new Regex(_))
-    val idPrefixRegex = new Regex(idPrefixRegexes.mkString("|"))
-    val idStrings = idPrefixRegexes.map(_.toString + "\\d{5}$")
+    val idPrefixesToReplaceStrList: List[String] = PackageConfig.idPrefixesToReplaceArray.toList
+    val idPrefixesToReplaceRegexList: List[Regex] = idPrefixesToReplaceStrList.map(new Regex(_))
+    val idPrefixRegex = new Regex(idPrefixesToReplaceRegexList.mkString("|"))
+    val idStrings = idPrefixesToReplaceRegexList.map(_.toString + "\\d{5}$")
     val idString = idStrings.mkString("|")
     val patientIdBefore: String =
       Attribute.getDelimitedStringValuesOrEmptyString(attrList, TagFromName.PatientID)
 
     if (patientIdBefore.matches(idString)) {
-      val patientIdAfter: String = idPrefixRegex.replaceFirstIn(patientIdBefore, PackageConfig.expectedIdPrefixStr)
+      val patientIdAfter: String = idPrefixRegex.replaceFirstIn(patientIdBefore, PackageConfig.correctIdPrefixStr)
       attrList.replaceWithValueIfPresent(TagFromName.PatientID, patientIdAfter)
     }
     else {

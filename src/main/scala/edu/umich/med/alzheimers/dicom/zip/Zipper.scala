@@ -35,10 +35,13 @@ class Zipper(
    */
   override def preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = {
     val target: Path = targetDirPath.resolve(sourceDirPath.relativize(dir))
+    val targetExists: Boolean = Files.exists(target)
 
     if (nodeDepth < zipDepth) {
-      logger.info(s"Create directory ${target.toString} with nodeDepth=${nodeDepth}")
-      Files.createDirectory(target)
+      if (!targetExists) {
+        logger.info(s"Create directory ${target.toString} with nodeDepth=${nodeDepth}")
+        Files.createDirectory(target)
+      }
       CONTINUE
     }
     else if (nodeDepth == zipDepth) {

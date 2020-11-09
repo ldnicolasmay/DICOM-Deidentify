@@ -31,6 +31,7 @@ object PackageConfig {
   val dicomFileRegex: String = PackageConfig.dicomFilenameRegexArray.mkString("|")
   val seriesDescriptionRegex: String = PackageConfig.seriesDescriptionRegexArray.mkString("|")
 
-  val idPrefixStringArray: Array[String] = config.getStringList("config.idPrefixStringArray").asScala.toArray
-  val expectedIdPrefixStr: String = config.getString("config.expectedIdPrefixStr")
+  val idPrefixesToReplaceArray: Array[String] =
+    config.getStringList("config.idPrefixesToReplaceArray").asScala.toArray
+  val correctIdPrefixStr: String = config.getString("config.correctIdPrefix")
 }

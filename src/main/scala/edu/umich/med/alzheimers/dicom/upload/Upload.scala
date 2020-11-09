@@ -49,16 +49,15 @@ class Upload extends Callable[Int] {
     logger.info(s"sourceDirNode, ${sourceDirNode.countSubNodes()} nodes")
 
     val sourceDirNodeDepth = sourceDirNode.depth
-    val uploader =
-      new Uploader(
-        sourceDirPath,
-        sourceDirNodeDepth,
-        uploadDepth,
-        s3BucketStr,
-        s3KeyPrefixStr,
-        awsAccessKeyId,
-        awsSecretAccessKey
-      )
+    val uploader = new Uploader(
+      sourceDirPath,
+      sourceDirNodeDepth,
+      uploadDepth,
+      s3BucketStr,
+      s3KeyPrefixStr,
+      awsAccessKeyId,
+      awsSecretAccessKey
+    )
 
     sourceDirNode.uploadNode(uploader)
     val s3BucketKeyPrefixStr: String = s3BucketStr + "/" + s3KeyPrefixStr
