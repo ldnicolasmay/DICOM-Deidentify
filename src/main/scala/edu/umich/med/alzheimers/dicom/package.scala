@@ -61,7 +61,7 @@ package object dicom {
    * @return `Boolean`
    */
   def intermedDirNameFilter(intermedDirRegex: String)(dirNode: DirNode): Boolean = {
-    dirNode.dirPath.getFileName.toString.matches(intermedDirRegex)
+    dirNode.path.getFileName.toString.matches(intermedDirRegex)
   }
 
   /**
@@ -83,7 +83,7 @@ package object dicom {
    * @return `Boolean`
    */
   def dicomFileFilter(dicomFileRegex: String)(fileNode: FileNode): Boolean = {
-    fileNode.filePath.getFileName.toString.matches(dicomFileRegex)
+    fileNode.path.getFileName.toString.matches(dicomFileRegex)
   }
 
   /**
@@ -97,7 +97,7 @@ package object dicom {
   def dicomFileSeriesDescripFilter(seriesDescriptionRegex: String)(fileNode: FileNode): Boolean = {
     val seriesDescription: String =
       getAttributeValueFromPathTagNextTag(
-        fileNode.filePath,
+        fileNode.path,
         TagFromName.SeriesDescription,
         TagFromName.ManufacturerModelName
       )
@@ -113,7 +113,7 @@ package object dicom {
    * @return `Boolean`
    */
   def childDirNodeExistsIn(dirNodeTreeToSearch: DirNode)(dirNode: DirNode): Boolean = {
-    if (dirNode.dirPath.toString == dirNodeTreeToSearch.dirPath.toString) {
+    if (dirNode.path.toString == dirNodeTreeToSearch.path.toString) {
       true
     } else {
       dirNodeTreeToSearch.childDirNodes
@@ -131,18 +131,18 @@ package object dicom {
    */
   @scala.annotation.tailrec
   def childFileNodeExistsIn(dirNodeTreeToSearch: DirNode)(fileNode: FileNode): Boolean = {
-    if (dirNodeTreeToSearch.childFileNodes.exists(_.filePath.toString == fileNode.filePath.toString)) {
+    if (dirNodeTreeToSearch.childFileNodes.exists(_.path.toString == fileNode.path.toString)) {
       true
     } else if (dirNodeTreeToSearch.childDirNodes.nonEmpty) {
-      val dirNodeTreeToSearchPathString = dirNodeTreeToSearch.dirPath.toString
-      val fileNodePathString = fileNode.filePath.toString
+      val dirNodeTreeToSearchPathString = dirNodeTreeToSearch.path.toString
+      val fileNodePathString = fileNode.path.toString
       val pathDiffArray: Array[String] = fileNodePathString
         .substring(dirNodeTreeToSearchPathString.length + 1)
         .split("/")
 
       // recurse down
       val targetNode = dirNodeTreeToSearch
-        .findDirNode(s"${dirNodeTreeToSearch.dirPath.toString}/${pathDiffArray.head}")
+        .findDirNode(s"${dirNodeTreeToSearch.path.toString}/${pathDiffArray.head}")
       targetNode match {
         case Some(newDirNodeTreeToSearch) => childFileNodeExistsIn(newDirNodeTreeToSearch)(fileNode)
         case None => false

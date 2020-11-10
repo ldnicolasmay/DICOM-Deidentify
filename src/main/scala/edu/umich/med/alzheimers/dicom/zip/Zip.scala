@@ -43,14 +43,14 @@ class Zip extends Callable[Int] {
 
     // Create source DirNode tree
     val sourceDirNode = DirNode(sourceDirPath, 0, ".*", ".*")
-    logger.info(s"sourceDirNode=${sourceDirNode.dirPath.toString}")
+    logger.info(s"sourceDirNode=${sourceDirNode.path.toString}")
     logger.info(s"sourceDirNode, ${sourceDirNode.countSubNodes()} nodes")
 
     // Zip source DirNode tree at zip depth
     val sourceDirNodeDepth = sourceDirNode.depth
     val zipper = new Zipper(sourceDirPath, targetDirPath, sourceDirNodeDepth, zipDepth)
     sourceDirNode.zipNode(zipper)
-    logger.info(s"${sourceDirNode.dirPath.toString} zipped to ${targetDirPath.toString}")
+    logger.info(s"${sourceDirNode.path.toString} zipped to ${targetDirPath.toString}")
 
     0
   }

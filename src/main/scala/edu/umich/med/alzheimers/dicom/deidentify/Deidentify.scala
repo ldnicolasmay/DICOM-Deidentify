@@ -47,7 +47,7 @@ class Deidentify extends Callable[Int] {
 
     // Create source `DirNode` tree
     val sourceDirNode: DirNode = DirNode(sourceDirPath, 0, intermedDirsRegex, dicomFileRegex)
-    logger.info(s"sourceDirNode=${sourceDirNode.dirPath.toString}")
+    logger.info(s"sourceDirNode=${sourceDirNode.path.toString}")
 
     // Deidentify files
     val deidentifier = new Deidentifier(sourceDirPath)

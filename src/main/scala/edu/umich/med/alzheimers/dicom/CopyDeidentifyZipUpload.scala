@@ -86,9 +86,9 @@ class CopyDeidentifyZipUpload extends Callable[Int] {
 
     // Create source and target DirNode trees
     val sourceDirNode = DirNode(copySourceDirPath, 0, intermedDirsRegex, dicomFileRegex)
-    logger.info(s"sourceDirNode=${sourceDirNode.dirPath.toString}, ${sourceDirNode.countSubNodes()} nodes")
+    logger.info(s"sourceDirNode=${sourceDirNode.path.toString}, ${sourceDirNode.countSubNodes()} nodes")
     val targetDirNode = DirNode(copyTargetDirPath, 0, intermedDirsRegex, dicomFileRegex)
-    logger.info(s"targetDirNode=${targetDirNode.dirPath.toString}, ${targetDirNode.countSubNodes()} nodes")
+    logger.info(s"targetDirNode=${targetDirNode.path.toString}, ${targetDirNode.countSubNodes()} nodes")
 
     // Filter source DirNode tree using regexes and focused filters
     val sourceDirNodeFiltered = sourceDirNode
@@ -103,15 +103,14 @@ class CopyDeidentifyZipUpload extends Callable[Int] {
     // facilitating identification of source- and target- DirNode tree discrepancies
     val targetDirNodeWithSourceRoot = targetDirNode
       .substituteRootNodeName(
-        targetDirNode.dirPath.getFileName.toString,
-        sourceDirNode.dirPath.getFileName.toString
+        targetDirNode.path.getFileName.toString,
+        sourceDirNode.path.getFileName.toString
       )
     logger.info(s"targetDirNodeWithSourceRoot, ${targetDirNodeWithSourceRoot.countSubNodes()} nodes")
 
     // Filter source DirNode tree based for files that do NOT already exist in target DirNode tree
     val sourceDirNodeFilteredMinusTargetNodeWithSourceRoot = sourceDirNodeFiltered
-      .filterNotChildFileNodesWith(childFileNodeExistsIn(targetDirNodeWithSourceRoot))
-      .filterChildDirNodesWith(nonemptyDirNodesFilter)
+      .filterChildNodesWith(node => !targetDirNodeWithSourceRoot.hasNode(node))
     logger.info(s"sourceDirNodeFilteredMinusTargetNodeWithSourceRoot, " +
       s"${sourceDirNodeFilteredMinusTargetNodeWithSourceRoot.countSubNodes()} nodes")
 
@@ -125,8 +124,8 @@ class CopyDeidentifyZipUpload extends Callable[Int] {
     val sourceDirNodeFilteredMinusTargetNodeWithSourceRootWithTargetRoot: DirNode =
       sourceDirNodeFilteredMinusTargetNodeWithSourceRoot
         .substituteRootNodeName(
-          sourceDirNode.dirPath.getFileName.toString,
-          targetDirNode.dirPath.getFileName.toString
+          sourceDirNode.path.getFileName.toString,
+          targetDirNode.path.getFileName.toString
         )
 
     // Deidentify files

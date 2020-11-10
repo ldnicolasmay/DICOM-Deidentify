@@ -1,13 +1,47 @@
 package edu.umich.med.alzheimers.dicom.filesystem
 
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 /**
  * Implemented by `DirNode` and `FileNode`
  */
-abstract class Node {
+abstract class Node(
+                     path: Path,
+                     attrs: BasicFileAttributes,
+                     depth: Int
+                   ) {
+
+  /**
+   * Get path of the directory or file node
+   *
+   * @return `Path` of directory or file node
+   */
+  def getPath: Path = path
+
+  /**
+   * Get attributes of directory or file node
+   *
+   * @return `BasicFileAttributes` of node
+   */
+  def getAttrs: BasicFileAttributes = attrs
+
+  /**
+   * Get depth of directory or file node
+   *
+   * @return `Int` of node depth
+   */
+  def getDepth: Int = depth
+
+  /**
+   * Predicate to determine of this `Node` tree contains passed node
+   *
+   * @param node `Node` that may be in this node tree
+   * @return `Boolean` whether `node` exists
+   */
+  def hasNode(node: Node): Boolean
 
   /**
    * Print hierarchical representation of `Node` tree
@@ -44,10 +78,10 @@ abstract class Node {
    * <p>`DirNode` path example: `/path/to/dir => Seq("path", "to", "dir")`;
    * `FileNode` path example: `/path/to/file.txt => Seq("path", "to", "file.txt")`</p>
    *
-   * @param nodePath Path to node
-   * @return Path as a sequence of strings
+   * @param path `Path` to node
+   * @return `Path` as a sequence of strings
    */
-  def nodePathSeq(nodePath: Path): Seq[String] = nodePath
+  def nodePathSeq(path: Path): Seq[String] = path
     .iterator()
     .asScala
     .map(_.getFileName.toString)

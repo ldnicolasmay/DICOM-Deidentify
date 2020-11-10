@@ -54,10 +54,10 @@ class Copy extends Callable[Int] {
 
     // Create source and target DirNode trees
     val sourceDirNode = DirNode(sourceDirPath, 0, intermedDirsRegex, dicomFileRegex)
-    logger.info(s"sourceDirNode=${sourceDirNode.dirPath.toString}")
+    logger.info(s"sourceDirNode=${sourceDirNode.path.toString}")
     logger.info(s"sourceDirNode, ${sourceDirNode.countSubNodes()} nodes")
     val targetDirNode = DirNode(targetDirPath, 0, intermedDirsRegex, dicomFileRegex)
-    logger.info(s"targetDirNode=${targetDirNode.dirPath.toString}")
+    logger.info(s"targetDirNode=${targetDirNode.path.toString}")
     logger.info(s"targetDirNode, ${targetDirNode.countSubNodes()} nodes")
 
     // Filter source DirNode tree using regexes and focused filters
@@ -74,15 +74,14 @@ class Copy extends Callable[Int] {
     // facilitating identification of source- and target- DirNode tree discrepancies
     val targetDirNodeWithSourceRoot = targetDirNode
       .substituteRootNodeName(
-        targetDirNode.dirPath.getFileName.toString,
-        sourceDirNode.dirPath.getFileName.toString
+        targetDirNode.path.getFileName.toString,
+        sourceDirNode.path.getFileName.toString
       )
     logger.info(s"targetDirNodeWithSourceRoot, ${targetDirNodeWithSourceRoot.countSubNodes()} nodes")
 
     // Filter source DirNode tree based for files that do NOT already exist in target DirNode tree
     val sourceDirNodeFilteredMinusTargetNodeWithSourceRoot = sourceDirNodeFiltered
-      .filterNotChildFileNodesWith(childFileNodeExistsIn(targetDirNodeWithSourceRoot))
-      .filterChildDirNodesWith(nonemptyDirNodesFilter)
+      .filterChildNodesWith(node => !targetDirNodeWithSourceRoot.hasNode(node))
     logger.info(s"sourceDirNodeFilteredMinusTargetNodeWithSourceRoot, " +
       s"${sourceDirNodeFilteredMinusTargetNodeWithSourceRoot.countSubNodes()} nodes")
 

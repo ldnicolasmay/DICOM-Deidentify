@@ -88,8 +88,8 @@ There are five config files, one for the app overall (`package.conf`) and four f
 * `intermedDirsRegexArray`: Regex string array of directories between the `sourceDirPathStr` in `copy.conf` (see below) and the target DICOM files.
 * `dicomFilenameRegexArray`: Regex string array of DICOM file names to include for processing.
 * `seriesDescriptionRegexArray`: Regex string array of Series Description element values to include for processing.
-* `idPrefixStringArray`: ID prefix values in DICOM "Patient ID" element to replace.
-* `expectedIdPrefixStr`: 
+* `idPrefixesToReplaceArray`: Incorrect ID prefix values in DICOM "Patient ID" element to replace with `correctIdPrefixStr`.
+* `correctIdPrefixStr`: Correct ID prefix to replace incorrect ID prefix values. 
 
 ##### 2. Configuring `copy.conf`
 

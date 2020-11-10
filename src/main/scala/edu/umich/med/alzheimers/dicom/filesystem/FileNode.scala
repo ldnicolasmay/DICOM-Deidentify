@@ -15,15 +15,16 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 /**
  * Representation of file nodes, always leaves of `DirNode` trees
  *
- * @param filePath `Path` of file
- * @param depth    `Int` depth of `FileNode` object in `DirNode` tree containing it
- * @param attrs    `BasicFileAttributes` object of file
+ * @param path  `Path` of file
+ * @param attrs `BasicFileAttributes` object of file
+ * @param depth `Int` depth of `FileNode` object in `DirNode` tree containing it
  */
 case class FileNode(
-                     filePath: Path,
-                     depth: Int,
-                     attrs: BasicFileAttributes)
-  extends Node {
+                     path: Path,
+                     attrs: BasicFileAttributes,
+                     depth: Int
+                   )
+  extends Node(path, attrs, depth) {
 
   /** Logger */
   private def logger: Logger = FileNode.logger
@@ -32,7 +33,7 @@ case class FileNode(
    * Print hierarchical representation of this `FileNode`
    */
   override def printNode(): Unit = {
-    println(s"${"  " * depth}$depth : ${filePath.toString}")
+    println(s"${"  " * depth}$depth : ${path.toString}")
   }
 
   /**
@@ -41,7 +42,17 @@ case class FileNode(
    * @return `String` of `DirNode` tree represented hierarchically
    */
   override def toString: String = {
-    s"$depth ${filePath.toString}\n"
+    s"$depth ${path.toString}\n"
+  }
+
+  /**
+   * Predicate to determine if this `FileNode` tree equals passed node
+   *
+   * @param node `Node` that may be in this node tree
+   * @return `Boolean` whether `node` exists
+   */
+  def hasNode(node: Node): Boolean = {
+    path.toString == node.getPath.toString
   }
 
   /**
@@ -51,10 +62,10 @@ case class FileNode(
    */
   def copyNode(copier: Copier): Unit = {
     try {
-      copier.visitFile(filePath, attrs)
+      copier.visitFile(path, attrs)
     }
     catch {
-      case e: IOException => copier.visitFileFailed(filePath, e)
+      case e: IOException => copier.visitFileFailed(path, e)
     }
   }
 
@@ -65,10 +76,10 @@ case class FileNode(
    */
   def deidentifyNode(deidentifier: Deidentifier): Unit = {
     try {
-      deidentifier.visitFile(filePath, attrs)
+      deidentifier.visitFile(path, attrs)
     }
     catch {
-      case e: IOException => deidentifier.visitFileFailed(filePath, e)
+      case e: IOException => deidentifier.visitFileFailed(path, e)
     }
   }
 
@@ -79,19 +90,24 @@ case class FileNode(
    */
   def zipNode(zipper: Zipper): Unit = {
     try {
-      zipper.visitFile(filePath, attrs)
+      zipper.visitFile(path, attrs)
     }
     catch {
-      case e: IOException => zipper.visitFileFailed(filePath, e)
+      case e: IOException => zipper.visitFileFailed(path, e)
     }
   }
 
+  /**
+   * Upload this `FileNode` file using passed `Zipper` object
+   *
+   * @param uploader `Uploader` with required fields
+   */
   def uploadNode(uploader: Uploader): Unit = {
     try {
-      uploader.visitFile(filePath, attrs)
+      uploader.visitFile(path, attrs)
     }
     catch {
-      case e: IOException => uploader.visitFileFailed(filePath, e)
+      case e: IOException => uploader.visitFileFailed(path, e)
     }
   }
 
@@ -104,7 +120,7 @@ case class FileNode(
    * @return `Int` index of directory or file
    */
   override def getSubpathIndexOf(name: String): Int = {
-    val fileNodeFileNameSeq: Seq[String] = nodePathSeq(filePath)
+    val fileNodeFileNameSeq: Seq[String] = nodePathSeq(path)
 
     fileNodeFileNameSeq.indexOf(name)
   }
@@ -118,7 +134,7 @@ case class FileNode(
    * @return `Int` length of this `FileNode`'s iterator
    */
   override def getPathLength: Int = {
-    filePath.iterator().asScala.length
+    path.iterator().asScala.length
   }
 
   /**
@@ -134,9 +150,11 @@ case class FileNode(
    */
   override def substituteRootNodeName(oldName: String, newName: String): FileNode = {
     val nameIndex: Int = getSubpathIndexOf(oldName)
-    val newPath = filePath.getRoot.resolve(
-      filePath.subpath(0, nameIndex).resolve(newName).resolve(
-        filePath.subpath(nameIndex + 1, this.getPathLength)))
+    val newPath = path.getRoot.resolve(
+      path.subpath(0, nameIndex).resolve(newName).resolve(
+        path.subpath(nameIndex + 1, this.getPathLength)
+      )
+    )
 
     FileNode(newPath, depth)
   }
@@ -160,6 +178,6 @@ object FileNode {
   def apply(filePath: Path, depth: Int): FileNode = {
     val attrs = Files.readAttributes(filePath, classOf[BasicFileAttributes])
 
-    this (filePath, depth, attrs)
+    this (filePath, attrs, depth)
   }
 }

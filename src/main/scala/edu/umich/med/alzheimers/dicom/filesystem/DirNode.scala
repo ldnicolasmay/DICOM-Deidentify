@@ -16,7 +16,7 @@ import scala.util.{Failure, Success, Try, Using}
 /**
  * Representation of directories in file system, a hierarchical tree structure
  *
- * @param dirPath           `Path` of directory
+ * @param path              `Path` of directory
  * @param attrs             `BasicFileAttributes` object of directory
  * @param depth             `Int` depth of `DirNode` object within its `DirNode` tree
  * @param childDirNodes     `List` of child `DirNode` objects
@@ -25,14 +25,14 @@ import scala.util.{Failure, Success, Try, Using}
  * @param dicomFileRegex    `String` regex of DICOM file names
  */
 case class DirNode(
-                    dirPath: Path,
+                    path: Path,
                     attrs: BasicFileAttributes,
                     depth: Int,
                     childDirNodes: List[DirNode],
                     childFileNodes: List[FileNode],
                     intermedDirsRegex: String,
                     dicomFileRegex: String)
-  extends Node {
+  extends Node(path, attrs, depth) {
 
   /** Logger */
   private def logger: Logger = DirNode.logger
@@ -43,7 +43,7 @@ case class DirNode(
    * @return String of DirNode tree represented hierarchically
    */
   override def toString: String = {
-    s"$depth ${dirPath.toString}" + "\n" +
+    s"$depth ${path.toString}" + "\n" +
       childDirNodes.map(_.toString) + "\n" +
       childFileNodes.map(_.toString) + "\n"
   }
@@ -68,7 +68,7 @@ case class DirNode(
    *
    * @return Int length of this DirNode object's iterator
    */
-  override def getPathLength: Int = dirPath.iterator().asScala.length
+  override def getPathLength: Int = path.iterator().asScala.length
 
   /**
    * <p>Gets path index of the directory or file name String passed to method</p>
@@ -79,7 +79,7 @@ case class DirNode(
    * @return Int index of directory or file
    */
   override def getSubpathIndexOf(name: String): Int = {
-    val dirNodeFileNameSeq: Seq[String] = nodePathSeq(dirPath)
+    val dirNodeFileNameSeq: Seq[String] = nodePathSeq(path)
 
     dirNodeFileNameSeq.indexOf(name)
   }
@@ -97,21 +97,38 @@ case class DirNode(
       .map(_.filterChildDirNodesWith(predicate))
       .filter(predicate)
 
-    this.copy(dirPath, attrs, depth, filteredChildDirs, childFileNodes)
+    this.copy(path, attrs, depth, filteredChildDirs, childFileNodes)
   }
 
-  /**
-   * Not-filters the child DirNode objects of this DirNode object based on passed predicate
-   *
-   * @param predicate Function that accepts a DirNode object and returns a Boolean
-   * @return DirNode object filtered
-   */
-  def filterNotChildDirNodesWith(predicate: DirNode => Boolean): DirNode = {
-    val filteredChildDirs = childDirNodes
-      .map(_.filterChildDirNodesWith(predicate))
-      .filterNot(predicate)
+  //  /**
+  //   * Not-filters the child DirNode objects of this DirNode object based on passed predicate
+  //   *
+  //   * @param predicate Function that accepts a DirNode object and returns a Boolean
+  //   * @return DirNode object filtered
+  //   */
+  //  def filterNotChildDirNodesWith(predicate: DirNode => Boolean): DirNode = {
+  //    val filteredChildDirs = childDirNodes
+  //      .map(_.filterChildDirNodesWith(predicate))
+  //      .filterNot(predicate)
+  //
+  //    this.copy(path, attrs, depth, filteredChildDirs, childFileNodes)
+  //  }
 
-    this.copy(dirPath, attrs, depth, filteredChildDirs, childFileNodes)
+  /**
+   * Filters the child `Node` objects of this DirNode` object based on passed `predicate`
+   *
+   *
+   * @param predicate Function that accepts a `Node` object and returns a `Boolean`
+   * @return `DirNode` object filtered
+   */
+  def filterChildNodesWith(predicate: Node => Boolean): DirNode = {
+    val filteredChildDirs = childDirNodes
+      .map(_.filterChildNodesWith(predicate))
+
+    val filteredChildFiles = childFileNodes
+      .filter(predicate)
+
+    this.copy(path, attrs, depth, filteredChildDirs, filteredChildFiles)
   }
 
   /**
@@ -124,21 +141,21 @@ case class DirNode(
     val filteredChildFiles = childFileNodes.filter(predicate)
     val filteredChildDirs = childDirNodes.map(_.filterChildFileNodesWith(predicate))
 
-    this.copy(dirPath, attrs, depth, filteredChildDirs, filteredChildFiles)
+    this.copy(path, attrs, depth, filteredChildDirs, filteredChildFiles)
   }
 
-  /**
-   * Not-filters the child FileNode objects of this DirNode object based on passed predicate
-   *
-   * @param predicate Function that accepts a FileNode object and returns a Boolean
-   * @return DirNode object filtered
-   */
-  def filterNotChildFileNodesWith(predicate: FileNode => Boolean): DirNode = {
-    val filteredChildFiles = childFileNodes.filterNot(predicate)
-    val filteredChildDirs = childDirNodes.map(_.filterNotChildFileNodesWith(predicate))
-
-    this.copy(dirPath, attrs, depth, filteredChildDirs, filteredChildFiles)
-  }
+  //  /**
+  //   * Not-filters the child FileNode objects of this DirNode object based on passed predicate
+  //   *
+  //   * @param predicate Function that accepts a FileNode object and returns a Boolean
+  //   * @return DirNode object filtered
+  //   */
+  //  def filterNotChildFileNodesWith(predicate: FileNode => Boolean): DirNode = {
+  //    val filteredChildFiles = childFileNodes.filterNot(predicate)
+  //    val filteredChildDirs = childDirNodes.map(_.filterNotChildFileNodesWith(predicate))
+  //
+  //    this.copy(path, attrs, depth, filteredChildDirs, filteredChildFiles)
+  //  }
 
   /**
    * <p>Substitutes a path string for this DirNode object's path string</p>
@@ -157,18 +174,18 @@ case class DirNode(
 
     val newPath: Path =
       if (pathLength <= nameIndex + 1) {
-        dirPath.getRoot.resolve(
-          dirPath
+        path.getRoot.resolve(
+          path
             .subpath(0, nameIndex)
             .resolve(newName)
         )
       }
       else {
-        dirPath.getRoot.resolve(
-          dirPath
+        path.getRoot.resolve(
+          path
             .subpath(0, nameIndex)
             .resolve(newName)
-            .resolve(dirPath.subpath(nameIndex + 1, pathLength))
+            .resolve(path.subpath(nameIndex + 1, pathLength))
         )
       }
 
@@ -189,7 +206,7 @@ case class DirNode(
    * @return DirNode object of interest
    */
   def findDirNode(dirPathString: String): Option[DirNode] = {
-    childDirNodes.find(_.dirPath.toString == dirPathString)
+    childDirNodes.find(_.path.toString == dirPathString)
   }
 
   /**
@@ -199,7 +216,7 @@ case class DirNode(
    * @return FileNode object of interest
    */
   def findFileNode(filePathString: String): Option[FileNode] = {
-    childFileNodes.find(_.filePath.toString == filePathString)
+    childFileNodes.find(_.path.toString == filePathString)
   }
 
   /* Methods that return `Unit` */
@@ -208,10 +225,28 @@ case class DirNode(
    * Prints hierarchical representation of this `DirNode` tree
    */
   override def printNode(): Unit = {
-    println(s"${"  " * depth}$depth ${dirPath.toString}")
+    println(s"${"  " * depth}$depth ${path.toString}")
 
     childDirNodes.foreach(_.printNode())
     childFileNodes.foreach(_.printNode())
+  }
+
+  /**
+   * Predicate to determine if this `DirNode` tree contains passed node
+   *
+   * @param node `Node` that may be in this node tree
+   * @return `Boolean` whether `node` exists
+   */
+  def hasNode(node: Node): Boolean = {
+    if (path.toString == node.getPath.toString) {
+      true
+    } else if (this.childDirNodes.nonEmpty || this.childFileNodes.nonEmpty) {
+      val hasNodeInChildDirs: Boolean = this.childDirNodes.foldLeft(false)(_ || _.hasNode(node))
+      val hasNodeInChildFiles: Boolean = this.childFileNodes.foldLeft(false)(_ || _.hasNode(node))
+      hasNodeInChildDirs || hasNodeInChildFiles
+    } else {
+      false
+    }
   }
 
   /**
@@ -223,7 +258,7 @@ case class DirNode(
     var exc: IOException = null
 
     try {
-      copier.preVisitDirectory(dirPath, attrs)
+      copier.preVisitDirectory(path, attrs)
     }
     catch {
       case e: IOException =>
@@ -234,7 +269,7 @@ case class DirNode(
     childDirNodes.foreach(_.copyNode(copier))
     childFileNodes.foreach(_.copyNode(copier))
 
-    copier.postVisitDirectory(dirPath, exc)
+    copier.postVisitDirectory(path, exc)
   }
 
   /**
@@ -246,7 +281,7 @@ case class DirNode(
     var exc: IOException = null
 
     try {
-      deidentifier.preVisitDirectory(dirPath, attrs)
+      deidentifier.preVisitDirectory(path, attrs)
     }
     catch {
       case e: IOException =>
@@ -257,7 +292,7 @@ case class DirNode(
     childDirNodes.foreach(_.deidentifyNode(deidentifier))
     childFileNodes.foreach(_.deidentifyNode(deidentifier))
 
-    deidentifier.postVisitDirectory(dirPath, exc)
+    deidentifier.postVisitDirectory(path, exc)
   }
 
   /**
@@ -269,7 +304,7 @@ case class DirNode(
     var exc: IOException = null
 
     try {
-      zipper.preVisitDirectory(dirPath, attrs)
+      zipper.preVisitDirectory(path, attrs)
     }
     catch {
       case e: IOException =>
@@ -286,14 +321,14 @@ case class DirNode(
     childDirNodes.foreach(_.zipNode(newFileZipper))
     childFileNodes.foreach(_.zipNode(newFileZipper))
 
-    zipper.postVisitDirectory(dirPath, exc)
+    zipper.postVisitDirectory(path, exc)
   }
 
   def uploadNode(uploader: Uploader): Unit = {
     var exc: IOException = null
 
     try {
-      uploader.preVisitDirectory(dirPath, attrs)
+      uploader.preVisitDirectory(path, attrs)
     }
     catch {
       case e: IOException =>
@@ -313,7 +348,7 @@ case class DirNode(
     childDirNodes.foreach(_.uploadNode(newFileUploader))
     childFileNodes.foreach(_.uploadNode(newFileUploader))
 
-    uploader.postVisitDirectory(dirPath, exc)
+    uploader.postVisitDirectory(path, exc)
   }
 
 }

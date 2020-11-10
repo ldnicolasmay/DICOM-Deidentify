@@ -45,7 +45,7 @@ class Upload extends Callable[Int] {
 
     // Create source DirNode trees
     val sourceDirNode = DirNode(sourceDirPath, 0, ".*", ".*")
-    logger.info(s"sourceDirNode=${sourceDirNode.dirPath.toString}")
+    logger.info(s"sourceDirNode=${sourceDirNode.path.toString}")
     logger.info(s"sourceDirNode, ${sourceDirNode.countSubNodes()} nodes")
 
     val sourceDirNodeDepth = sourceDirNode.depth
@@ -61,7 +61,7 @@ class Upload extends Callable[Int] {
 
     sourceDirNode.uploadNode(uploader)
     val s3BucketKeyPrefixStr: String = s3BucketStr + "/" + s3KeyPrefixStr
-    logger.info(s"${sourceDirNode.dirPath.toString} uploaded to ${s3BucketKeyPrefixStr}")
+    logger.info(s"${sourceDirNode.path.toString} uploaded to ${s3BucketKeyPrefixStr}")
 
     0
   }
